@@ -39,10 +39,7 @@ if (-not (Get-Command vpk -ErrorAction SilentlyContinue)) {
 Write-Host "==> Packing with Velopack..."
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 
-# Pipe a "Y" into stdin so vpk auto-confirms its "A release with the same or
-# greater version already exists. Continue?" prompt when re-packing the same
-# version (typical during dev iterations).
-'Y' | vpk pack `
+vpk pack `
     --packId PrintAgent `
     --packVersion $Version `
     --packDir $PublishDir `
