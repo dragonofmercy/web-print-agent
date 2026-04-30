@@ -1,5 +1,7 @@
 # Web Print Agent
 
+[![](https://img.shields.io/github/license/dragonofmercy/web-print-agent)](https://github.com/dragonofmercy/web-print-agent/blob/main/LICENSE)
+
 Windows tray agent (.NET 8) that exposes a `wss://` JSON-RPC API on `localhost` so paired HTTPS web pages can list local printers and silent-print PDFs without going through the browser dialog.
 
 Inspired by tools such as QZ Tray and Dymo Web Service, but kept intentionally minimal and focused on PDF printing.
@@ -113,10 +115,20 @@ pa.on('job.statusChanged', (event) => {
 })
 ```
 
+## Credits
+
+- Maintained by [DragonOfMercy](https://github.com/dragonofmercy)
+
 ## License
 
-[MIT](LICENSE) — Copyright (c) 2026 Dragon.
+This package is open-sourced software licensed under the [MIT](LICENSE) license.
 
 ### Third-party software
 
 PrintAgent embeds a copy of [SumatraPDF](https://www.sumatrapdfreader.org/) (3.6.1) for silent PDF printing. SumatraPDF is licensed under the GNU GPL v3.0 or later. PrintAgent invokes it as a separate subprocess, so the two programs form an aggregate under section 5 of the GPL and PrintAgent's MIT license is unaffected. See [agent/PrintAgent/Resources/SUMATRAPDF-NOTICE.txt](agent/PrintAgent/Resources/SUMATRAPDF-NOTICE.txt) for the full attribution and links to the source code.
+
+## Support
+
+If this project helps to increase your productivity, you can give me a cup of coffee :)
+
+<a href="https://ko-fi.com/dragonofmercy" target="_blank"><img src="https://cdn.ko-fi.com/cdn/kofi2.png?v=3" alt="Donate" width="160px" /></a>
