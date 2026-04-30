@@ -3,7 +3,12 @@ using PrintAgent.Storage;
 
 namespace PrintAgent.Security;
 
-public sealed class PairingService
+public interface IPairingCoordinator
+{
+    Task<PairingDecision> RequestApprovalAsync(string origin, CancellationToken ct);
+}
+
+public sealed class PairingService : IPairingCoordinator
 {
     private readonly ConfigStore _configStore;
     private readonly IPairingUi _ui;
