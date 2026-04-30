@@ -268,12 +268,6 @@
           </select>
         </label>
         <label class="field">
-          Tray
-          <select id="select-tray" disabled>
-            <option value="">(printer default)</option>
-          </select>
-        </label>
-        <label class="field">
           Orientation
           <select id="select-orientation">
             <option value="">(default)</option>
@@ -316,7 +310,6 @@
     const selectPrinter = document.getElementById('select-printer')
     const inputCopies = document.getElementById('input-copies')
     const selectPaper = document.getElementById('select-paper')
-    const selectTray = document.getElementById('select-tray')
     const selectOrientation = document.getElementById('select-orientation')
     const fileDrop = document.getElementById('file-drop')
     const fileInput = document.getElementById('file-input')
@@ -361,7 +354,6 @@
       btnList.disabled = true
       selectPrinter.disabled = true
       selectPaper.disabled = true
-      selectTray.disabled = true
       btnPrint.disabled = true
       log('warn', 'Connection closed')
     })
@@ -419,8 +411,7 @@
           const meta = document.createElement('div')
           meta.className = 'meta'
           const sizesCount = p.paperSizes?.length ?? 0
-          const traysCount = p.paperSources?.length ?? 0
-          meta.textContent = `${p.status} - ${sizesCount} paper sizes - ${traysCount} trays`
+          meta.textContent = `${p.status} - ${sizesCount} paper sizes`
           card.appendChild(name)
           card.appendChild(meta)
           printersDiv.appendChild(card)
@@ -442,26 +433,22 @@
 
     function refreshPaperSizes() {
       const printer = printersByName.get(selectPrinter.value)
-      populateOptions(selectPaper, printer?.paperSizes ?? [])
-      populateOptions(selectTray, printer?.paperSources ?? [])
-    }
-
-    function populateOptions(selectEl, items) {
-      selectEl.innerHTML = ''
+      const items = printer?.paperSizes ?? []
+      selectPaper.innerHTML = ''
       const defaultOpt = document.createElement('option')
       defaultOpt.value = ''
       defaultOpt.textContent = '(printer default)'
-      selectEl.appendChild(defaultOpt)
+      selectPaper.appendChild(defaultOpt)
       if (items.length > 0) {
-        for (const item of items) {
+        for (const size of items) {
           const opt = document.createElement('option')
-          opt.value = item
-          opt.textContent = item
-          selectEl.appendChild(opt)
+          opt.value = size
+          opt.textContent = size
+          selectPaper.appendChild(opt)
         }
-        selectEl.disabled = false
+        selectPaper.disabled = false
       } else {
-        selectEl.disabled = true
+        selectPaper.disabled = true
       }
     }
 
@@ -526,15 +513,14 @@
         const printerName = selectPrinter.value
         const copies = Math.max(1, parseInt(inputCopies.value) || 1)
         const paperSize = selectPaper.value || undefined
-        const tray = selectTray.value || undefined
         const orientation = selectOrientation.value || undefined
         const pdfBase64 = bytesToBase64(pdfBytes)
-        const optsLog = [copies + 'x', paperSize, tray, orientation].filter(Boolean).join(', ')
+        const optsLog = [copies + 'x', paperSize, orientation].filter(Boolean).join(', ')
         log('info', `Submitting print job to "${printerName}" (${optsLog})`)
         const { jobId } = await pa.print({
           printerName,
           pdfBase64,
-          options: { copies, paperSize, color: true, orientation, tray }
+          options: { copies, paperSize, color: true, orientation }
         })
         log('ok', `Job submitted: ${jobId}`)
       } catch (e) {

@@ -16,8 +16,8 @@ public class GetLocalPrintersHandlerTests
         var printerService = Substitute.For<IPrinterService>();
         printerService.List().Returns(new[]
         {
-            new PrinterInfo("HP", true, "Idle", new[] { "A4" }, new[] { "Tray 1", "Manual" }),
-            new PrinterInfo("Zebra", false, "Idle", new[] { "100x150" }, Array.Empty<string>()),
+            new PrinterInfo("HP", true, "Idle", new[] { "A4" }),
+            new PrinterInfo("Zebra", false, "Idle", new[] { "100x150" }),
         });
         var handler = new GetLocalPrintersHandler(printerService);
         var conn = new ConnectionContext { IsPaired = true };

@@ -54,8 +54,7 @@ public sealed class PrintHandler : IRpcHandler
                 Copies: optsEl.TryGetProperty("copies", out var c) && c.ValueKind == JsonValueKind.Number ? c.GetInt32() : 1,
                 PaperSize: optsEl.TryGetProperty("paperSize", out var ps) && ps.ValueKind == JsonValueKind.String ? ps.GetString() : null,
                 Color: optsEl.TryGetProperty("color", out var col) && col.ValueKind == JsonValueKind.False ? false : true,
-                Orientation: orientation,
-                Tray: optsEl.TryGetProperty("tray", out var tr) && tr.ValueKind == JsonValueKind.String ? tr.GetString() : null);
+                Orientation: orientation);
         }
 
         var jobId = await _jobs.SubmitAsync(printerName, pdfBytes, options, connection.ConnectionId, ct);

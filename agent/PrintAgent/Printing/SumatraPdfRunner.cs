@@ -20,7 +20,6 @@ public sealed class SumatraPdfRunner : ISumatraRunner
         var settings = new List<string>();
         if (options.Copies > 1) settings.Add($"{options.Copies}x");
         if (!string.IsNullOrEmpty(options.PaperSize)) settings.Add($"paper={options.PaperSize}");
-        if (!string.IsNullOrEmpty(options.Tray)) settings.Add($"bin={options.Tray}");
         if (!options.Color) settings.Add("monochrome");
         switch (options.Orientation)
         {

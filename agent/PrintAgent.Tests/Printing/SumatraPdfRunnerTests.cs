@@ -77,26 +77,4 @@ public class SumatraPdfRunnerTests
         idx.Should().BeGreaterOrEqualTo(0);
         args[idx + 1].Should().Be("2x,paper=A4,monochrome,landscape");
     }
-
-    [Fact]
-    public void BuildArguments_TraySpecified_AddsBinSetting()
-    {
-        var args = SumatraPdfRunner.BuildArguments("HP", "x.pdf",
-            new PrintOptions(Tray: "Tray 1"));
-
-        var idx = args.IndexOf("-print-settings");
-        idx.Should().BeGreaterOrEqualTo(0);
-        args[idx + 1].Should().Be("bin=Tray 1");
-    }
-
-    [Fact]
-    public void BuildArguments_TrayCombinedWithPaperSize_OrdersBinAfterPaper()
-    {
-        var args = SumatraPdfRunner.BuildArguments("HP", "x.pdf",
-            new PrintOptions(PaperSize: "A4", Tray: "Manual"));
-
-        var idx = args.IndexOf("-print-settings");
-        idx.Should().BeGreaterOrEqualTo(0);
-        args[idx + 1].Should().Be("paper=A4,bin=Manual");
-    }
 }
