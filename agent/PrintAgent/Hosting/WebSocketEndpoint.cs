@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using Microsoft.AspNetCore.Http;
@@ -16,6 +17,7 @@ public sealed class WebSocketEndpoint
     private readonly JobEventPublisher _publisher;
     private readonly ILogger _log;
     private readonly int _maxMessageBytes;
+    private readonly ConcurrentDictionary<Guid, WebSocket> _activeSockets = new();
 
     public WebSocketEndpoint(
         RpcRouter router,
@@ -57,6 +59,8 @@ public sealed class WebSocketEndpoint
             SendNotificationAsync = (n, ct) => SendAsync(ws, RpcRouter.SerializeNotification(n), ct)
         };
 
+        _activeSockets[connection.ConnectionId] = ws;
+
         // Subscribe this connection to job events targeted at it.
         Task LocalJobEventListener(Guid connId, JobEvent ev, CancellationToken ct)
         {
@@ -76,11 +80,32 @@ public sealed class WebSocketEndpoint
         };
 
         try { await ReceiveLoopAsync(ws, connection, context.RequestAborted); }
+        catch (OperationCanceledException) { /* normal during shutdown */ }
+        catch (WebSocketException) { /* normal when peer disconnects */ }
         catch (Exception ex) { _log.Warning(ex, "WS loop error for origin {Origin}", normalizedOrigin); }
         finally
         {
             _publisher.SendAsync = oldSink;
+            _activeSockets.TryRemove(connection.ConnectionId, out _);
         }
+    }
+
+    public async Task CloseAllAsync(CancellationToken ct)
+    {
+        var sockets = _activeSockets.Values.ToList();
+        if (sockets.Count == 0) return;
+
+        _log.Information("Closing {Count} active WebSocket connection(s)...", sockets.Count);
+        var tasks = sockets.Select(async ws =>
+        {
+            try
+            {
+                if (ws.State == WebSocketState.Open)
+                    await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "shutting down", ct);
+            }
+            catch { /* best effort */ }
+        });
+        await Task.WhenAll(tasks);
     }
 
     private async Task ReceiveLoopAsync(WebSocket ws, ConnectionContext conn, CancellationToken ct)

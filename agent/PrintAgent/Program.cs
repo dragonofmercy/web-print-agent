@@ -88,9 +88,33 @@ internal static class Program
 
             Application.Run();
 
-            host.StopAsync(CancellationToken.None).GetAwaiter().GetResult();
-            jobs.Dispose();
+            logger.Information("PrintAgent shutting down...");
+
+            // Hide the tray icon first so the user gets immediate visual feedback.
             trayHost.Dispose();
+
+            // Close active WebSockets proactively, then stop Kestrel with a short timeout.
+            // Without this, Kestrel waits for in-flight WebSockets (which auto-reconnect-loop
+            // clients would keep alive) for up to 30s.
+            using (var stopCts = new CancellationTokenSource(TimeSpan.FromSeconds(3)))
+            {
+                try
+                {
+                    endpoint.CloseAllAsync(stopCts.Token).GetAwaiter().GetResult();
+                    host.StopAsync(stopCts.Token).GetAwaiter().GetResult();
+                }
+                catch (OperationCanceledException)
+                {
+                    logger.Warning("Shutdown did not complete within 3s; forcing exit.");
+                }
+                catch (Exception ex)
+                {
+                    logger.Warning(ex, "Error during shutdown.");
+                }
+            }
+
+            jobs.Dispose();
+            logger.Information("PrintAgent stopped.");
         }
         catch (Exception ex)
         {
