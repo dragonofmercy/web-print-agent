@@ -12,7 +12,7 @@ SumatraPDF is GPL-3.0+ — see `SUMATRAPDF-NOTICE.txt` for the attribution and t
 
 ## icon.svg / icon.ico
 
-`icon.svg` is the source of truth for the application icon. It's derived from [`line-md:cloud-alt-print-twotone`](https://icon-sets.iconify.design/line-md/cloud-alt-print-twotone/) by [cyberalien/line-md](https://github.com/cyberalien/line-md) (MIT license), with the SMIL animations frozen at their final state and stroke recolored to the project accent `#3b82f6`. Edit this file when you want to change the design.
+`icon.svg` is the source of truth for the application icon. It's [`noto:printer`](https://icon-sets.iconify.design/noto/printer/) — Google's Noto Emoji rendition of the printer glyph (U+1F5A8), Apache-2.0 licensed. Edit this file when you want to change the design.
 
 `icon.ico` is the multi-size compiled bundle (16, 20, 24, 32, 40, 48, 64, 128, 256 px) consumed by:
 
