@@ -27,7 +27,7 @@ Inspired by tools such as QZ Tray and Dymo Web Service, but kept intentionally m
 |---------------|------------------------------------------------------------|
 | `agent/`      | .NET 8 solution: the tray agent + xUnit test project.      |
 | `client/`     | Standalone TypeScript client (no npm publish, copy-paste). |
-| `installer/`  | Inno Setup script producing the Windows installer.         |
+| `installer/`  | Velopack build script producing the Windows installer.     |
 
 ## Build
 
@@ -36,7 +36,7 @@ Inspired by tools such as QZ Tray and Dymo Web Service, but kept intentionally m
 - Windows 10/11 x64
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Node.js 20+](https://nodejs.org) (for building the TypeScript client)
-- [Inno Setup 6](https://jrsoftware.org/isinfo.php) (for the installer)
+- `.NET tool: vpk` — auto-installed globally by `build.ps1` if not present (`dotnet tool install -g vpk`)
 - [SumatraPDF](https://www.sumatrapdfreader.org/download-free-pdf-viewer) — download the **portable 64-bit** build and copy `SumatraPDF.exe` to `agent/PrintAgent/Resources/`. This file is gitignored.
 
 ### Build the agent
@@ -68,11 +68,16 @@ Output: `client/dist/printagent-client.js` and `printagent-client.d.ts`. These t
 ### Build the installer
 
 ```sh
-cd installer
-iscc PrintAgent.iss
+cd build/installer
+./build.ps1 -Version 0.1.0
 ```
 
-Output: `installer/Output/PrintAgentSetup-X.Y.Z.exe`.
+Output in `installer/Output/`:
+- `PrintAgentSetup.exe` — run on the target machine to install (per-user, no elevation required)
+- `RELEASES` — Velopack release feed for auto-update
+- `PrintAgent-0.1.0-full.nupkg` — delta update package
+
+The installer is built with [Velopack](https://velopack.io/). The `vpk` dotnet tool is installed automatically by `build.ps1` if not already present.
 
 ## Using the client in a web page
 
