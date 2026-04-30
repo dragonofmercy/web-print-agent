@@ -53,8 +53,8 @@ public sealed class PrintJobService : IDisposable, IPrintJobSubmitter
         var job = new PrintJob(jobId, printerName, pdfPath, options, connectionId);
         _jobs[jobId] = new JobState { Status = JobStatus.Submitted };
 
-        await _queue.Writer.WriteAsync(job, ct);
         await _publisher.PublishAsync(connectionId, new JobEvent(jobId, JobStatus.Submitted), ct);
+        await _queue.Writer.WriteAsync(job, ct);
         return jobId;
     }
 
