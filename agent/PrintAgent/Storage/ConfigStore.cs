@@ -1,0 +1,66 @@
+using System.Text.Json;
+
+namespace PrintAgent.Storage;
+
+public sealed class ConfigStore
+{
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+    private readonly string _path;
+    private readonly object _lock = new();
+
+    public ConfigStore(string path) => _path = path;
+
+    public ConfigModel Load()
+    {
+        lock (_lock)
+        {
+            if (!File.Exists(_path)) return new ConfigModel();
+            try
+            {
+                var json = File.ReadAllText(_path);
+                return JsonSerializer.Deserialize<ConfigModel>(json) ?? new ConfigModel();
+            }
+            catch (JsonException)
+            {
+                return new ConfigModel();
+            }
+        }
+    }
+
+    public bool AddAllowedOrigin(string origin)
+    {
+        lock (_lock)
+        {
+            var model = Load();
+            if (model.AllowedOrigins.Contains(origin, StringComparer.Ordinal)) return false;
+            model.AllowedOrigins.Add(origin);
+            Save(model);
+            return true;
+        }
+    }
+
+    public bool IsOriginAllowed(string origin)
+    {
+        lock (_lock)
+        {
+            return Load().AllowedOrigins.Contains(origin, StringComparer.Ordinal);
+        }
+    }
+
+    public void SetLastBoundPort(int port)
+    {
+        lock (_lock)
+        {
+            var model = Load();
+            model.LastBoundPort = port;
+            Save(model);
+        }
+    }
+
+    private void Save(ConfigModel model)
+    {
+        var dir = Path.GetDirectoryName(_path);
+        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+        File.WriteAllText(_path, JsonSerializer.Serialize(model, JsonOptions));
+    }
+}
