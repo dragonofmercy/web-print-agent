@@ -1,4 +1,4 @@
-namespace PrintAgent;
+﻿namespace PrintAgent;
 
 internal static class Program
 {
