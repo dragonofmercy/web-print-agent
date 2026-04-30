@@ -5,7 +5,13 @@ using PrintAgent.Protocol.Events;
 
 namespace PrintAgent.Printing;
 
-public sealed class PrintJobService : IDisposable
+public interface IPrintJobSubmitter
+{
+    Task<Guid> SubmitAsync(string printerName, byte[] pdfBytes, PrintOptions options, Guid connectionId, CancellationToken ct);
+    JobStatus? GetStatus(Guid jobId, out string? error);
+}
+
+public sealed class PrintJobService : IDisposable, IPrintJobSubmitter
 {
     private readonly JobEventPublisher _publisher;
     private readonly ISumatraRunner _runner;
