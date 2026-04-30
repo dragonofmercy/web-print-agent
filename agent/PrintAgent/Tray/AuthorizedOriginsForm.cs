@@ -105,8 +105,7 @@ internal sealed class AuthorizedOriginsForm : Form
         var buttonRow = new Panel
         {
             Dock = DockStyle.Bottom,
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Height = 64,
             Padding = new Padding(12, 6, 12, 12),
         };
         buttonRow.Controls.Add(leftButtons);
