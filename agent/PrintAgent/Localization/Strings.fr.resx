@@ -14,7 +14,7 @@
   </resheader>
 
   <data name="Pairing_Title" xml:space="preserve">
-    <value>PrintAgent — autorisation</value>
+    <value>Web Print Agent — autorisation</value>
   </data>
   <data name="Pairing_Message" xml:space="preserve">
     <value>"{0}"
@@ -31,10 +31,10 @@ veut accéder à vos imprimantes locales.</value>
     <value>État…</value>
   </data>
   <data name="Tray_StatusRunning" xml:space="preserve">
-    <value>PrintAgent écoute sur wss://127.0.0.1:{0}</value>
+    <value>Web Print Agent écoute sur wss://127.0.0.1:{0}</value>
   </data>
   <data name="Tray_StatusStopped" xml:space="preserve">
-    <value>PrintAgent ne tourne pas.</value>
+    <value>Web Print Agent ne tourne pas.</value>
   </data>
   <data name="Tray_OpenLogs" xml:space="preserve">
     <value>Ouvrir les logs</value>
@@ -44,7 +44,7 @@ veut accéder à vos imprimantes locales.</value>
   </data>
 
   <data name="Bootstrap_FailedToStart" xml:space="preserve">
-    <value>Échec du démarrage de PrintAgent :
+    <value>Échec du démarrage de Web Print Agent :
 {0}</value>
   </data>
 
@@ -52,7 +52,7 @@ veut accéder à vos imprimantes locales.</value>
     <value>Origines autorisées…</value>
   </data>
   <data name="Origins_Title" xml:space="preserve">
-    <value>PrintAgent — Origines autorisées</value>
+    <value>Web Print Agent — Origines autorisées</value>
   </data>
   <data name="Origins_Empty" xml:space="preserve">
     <value>Aucune origine autorisée pour le moment. Elles sont ajoutées quand vous acceptez une demande d'autorisation.</value>

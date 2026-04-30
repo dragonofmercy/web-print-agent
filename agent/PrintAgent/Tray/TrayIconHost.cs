@@ -31,7 +31,7 @@ public sealed class TrayIconHost : IDisposable
     {
         _icon.Icon = Icons.LoadAt(SystemInformation.SmallIconSize) ?? SystemIcons.Application;
         _icon.Visible = true;
-        _icon.Text = "PrintAgent";
+        _icon.Text = Strings.AppName;
 
         var statusItem = new ToolStripMenuItem(Strings.TrayStatus);
         statusItem.Click += (_, _) =>
@@ -39,7 +39,7 @@ public sealed class TrayIconHost : IDisposable
             var port = _getBoundPort();
             MessageBox.Show(
                 port.HasValue ? Strings.TrayStatusRunning(port.Value) : Strings.TrayStatusStopped,
-                "PrintAgent", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Strings.AppName, MessageBoxButtons.OK, MessageBoxIcon.Information);
         };
 
         var originsItem = new ToolStripMenuItem(Strings.TrayAuthorizedOrigins);

@@ -179,5 +179,5 @@ internal sealed class AuthorizedOriginsForm : Form
     }
 
     private bool Confirm(string message, MessageBoxIcon icon)
-        => MessageBox.Show(this, message, "PrintAgent", MessageBoxButtons.YesNo, icon) == DialogResult.Yes;
+        => MessageBox.Show(this, message, Strings.AppName, MessageBoxButtons.YesNo, icon) == DialogResult.Yes;
 }

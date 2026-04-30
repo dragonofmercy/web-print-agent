@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Reflection;
 using System.Resources;
 
 namespace PrintAgent.Localization;
@@ -7,6 +8,9 @@ public static class Strings
 {
     private static readonly ResourceManager _rm =
         new("PrintAgent.Localization.Strings", typeof(Strings).Assembly);
+
+    public static string AppName { get; } =
+        typeof(Strings).Assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title ?? "PrintAgent";
 
     private static string Get(string key)
         => _rm.GetString(key, CultureInfo.CurrentUICulture) ?? key;

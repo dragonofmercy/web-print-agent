@@ -121,7 +121,7 @@ internal static class Program
         catch (Exception ex)
         {
             logger.Fatal(ex, "PrintAgent crashed during bootstrap.");
-            MessageBox.Show(Strings.BootstrapFailedToStart(ex.Message), "PrintAgent",
+            MessageBox.Show(Strings.BootstrapFailedToStart(ex.Message), Strings.AppName,
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         finally
@@ -200,7 +200,7 @@ internal static class Program
             var shortcut = shell.CreateShortcut(shortcutPath);
             shortcut.TargetPath = targetExe;
             shortcut.WorkingDirectory = Path.GetDirectoryName(targetExe);
-            shortcut.Description = "PrintAgent";
+            shortcut.Description = Strings.AppName;
             shortcut.Save();
         }
         catch { /* best effort */ }

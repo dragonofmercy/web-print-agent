@@ -14,7 +14,7 @@
   </resheader>
 
   <data name="Pairing_Title" xml:space="preserve">
-    <value>PrintAgent — Authorization</value>
+    <value>Web Print Agent — Authorization</value>
   </data>
   <data name="Pairing_Message" xml:space="preserve">
     <value>"{0}"
@@ -31,10 +31,10 @@ is requesting access to your local printers.</value>
     <value>Status...</value>
   </data>
   <data name="Tray_StatusRunning" xml:space="preserve">
-    <value>PrintAgent is listening on wss://127.0.0.1:{0}</value>
+    <value>Web Print Agent is listening on wss://127.0.0.1:{0}</value>
   </data>
   <data name="Tray_StatusStopped" xml:space="preserve">
-    <value>PrintAgent is not running.</value>
+    <value>Web Print Agent is not running.</value>
   </data>
   <data name="Tray_OpenLogs" xml:space="preserve">
     <value>Open logs</value>
@@ -44,7 +44,7 @@ is requesting access to your local printers.</value>
   </data>
 
   <data name="Bootstrap_FailedToStart" xml:space="preserve">
-    <value>PrintAgent failed to start:
+    <value>Web Print Agent failed to start:
 {0}</value>
   </data>
 
@@ -52,7 +52,7 @@ is requesting access to your local printers.</value>
     <value>Authorized origins...</value>
   </data>
   <data name="Origins_Title" xml:space="preserve">
-    <value>PrintAgent — Authorized origins</value>
+    <value>Web Print Agent — Authorized origins</value>
   </data>
   <data name="Origins_Empty" xml:space="preserve">
     <value>No authorized origin yet. They are added when you accept a pairing prompt.</value>
