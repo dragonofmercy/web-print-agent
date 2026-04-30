@@ -41,4 +41,13 @@
             <LogicalName>SumatraPDF.exe</LogicalName>
         </EmbeddedResource>
     </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Update="Localization\Strings.resx">
+            <Generator></Generator>
+        </EmbeddedResource>
+        <EmbeddedResource Update="Localization\Strings.fr.resx">
+            <Generator></Generator>
+        </EmbeddedResource>
+    </ItemGroup>
 </Project>

@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
 using PrintAgent.Hosting;
+using PrintAgent.Localization;
 using PrintAgent.Logging;
 using PrintAgent.Printing;
 using PrintAgent.Protocol;
@@ -39,6 +40,7 @@ internal static class Program
         paths.EnsureLayout();
 
         var options = LoadOptions();
+        Strings.ApplyCulture(options.Language);
 
         var logger = LoggerSetup.Create(paths.LogsDirectory, options.LogLevel);
         Log.Logger = logger;
@@ -119,7 +121,7 @@ internal static class Program
         catch (Exception ex)
         {
             logger.Fatal(ex, "PrintAgent crashed during bootstrap.");
-            MessageBox.Show($"PrintAgent failed to start:\n{ex.Message}", "PrintAgent",
+            MessageBox.Show(Strings.BootstrapFailedToStart(ex.Message), "PrintAgent",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         finally
@@ -148,6 +150,7 @@ internal static class Program
             PairingRefusalCooldown = TimeSpan.FromMinutes(section.TryGetProperty("PairingRefusalCooldownMinutes", out var rc) ? rc.GetInt32() : 5),
             AllowInsecureOrigins = section.TryGetProperty("AllowInsecureOrigins", out var aio) && aio.GetBoolean(),
             LogLevel = section.TryGetProperty("LogLevel", out var ll) ? ll.GetString() ?? "Information" : "Information",
+            Language = section.TryGetProperty("Language", out var lang) ? lang.GetString() ?? "auto" : "auto",
         };
     }
 

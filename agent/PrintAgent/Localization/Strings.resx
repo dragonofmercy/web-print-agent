@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="Pairing_Title" xml:space="preserve">
+    <value>PrintAgent — Authorization</value>
+  </data>
+  <data name="Pairing_Message" xml:space="preserve">
+    <value>"{0}"
+is requesting access to your local printers.</value>
+  </data>
+  <data name="Pairing_Allow" xml:space="preserve">
+    <value>Allow</value>
+  </data>
+  <data name="Pairing_Refuse" xml:space="preserve">
+    <value>Refuse</value>
+  </data>
+
+  <data name="Tray_Status" xml:space="preserve">
+    <value>Status...</value>
+  </data>
+  <data name="Tray_StatusRunning" xml:space="preserve">
+    <value>PrintAgent is listening on wss://127.0.0.1:{0}</value>
+  </data>
+  <data name="Tray_StatusStopped" xml:space="preserve">
+    <value>PrintAgent is not running.</value>
+  </data>
+  <data name="Tray_OpenLogs" xml:space="preserve">
+    <value>Open logs</value>
+  </data>
+  <data name="Tray_Quit" xml:space="preserve">
+    <value>Quit</value>
+  </data>
+
+  <data name="Bootstrap_FailedToStart" xml:space="preserve">
+    <value>PrintAgent failed to start:
+{0}</value>
+  </data>
+</root>

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Windows.Forms;
+using PrintAgent.Localization;
 using PrintAgent.Storage;
 
 namespace PrintAgent.Tray;
@@ -28,23 +29,23 @@ public sealed class TrayIconHost : IDisposable
         _icon.Visible = true;
         _icon.Text = "PrintAgent";
 
-        var statusItem = new ToolStripMenuItem("État...");
+        var statusItem = new ToolStripMenuItem(Strings.TrayStatus);
         statusItem.Click += (_, _) =>
         {
             var port = _getBoundPort();
             MessageBox.Show(
-                port.HasValue ? $"PrintAgent écoute sur wss://127.0.0.1:{port.Value}" : "PrintAgent ne tourne pas.",
+                port.HasValue ? Strings.TrayStatusRunning(port.Value) : Strings.TrayStatusStopped,
                 "PrintAgent", MessageBoxButtons.OK, MessageBoxIcon.Information);
         };
 
-        var logsItem = new ToolStripMenuItem("Ouvrir les logs");
+        var logsItem = new ToolStripMenuItem(Strings.TrayOpenLogs);
         logsItem.Click += (_, _) =>
         {
             try { Process.Start(new ProcessStartInfo(_paths.LogsDirectory) { UseShellExecute = true }); }
             catch { /* ignore */ }
         };
 
-        var quitItem = new ToolStripMenuItem("Quitter");
+        var quitItem = new ToolStripMenuItem(Strings.TrayQuit);
         quitItem.Click += (_, _) => _onQuit();
 
         _menu.Items.Add(statusItem);

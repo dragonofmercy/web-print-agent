@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Windows.Forms;
+using PrintAgent.Localization;
 
 namespace PrintAgent.Tray;
 
@@ -9,7 +10,7 @@ internal sealed class PairingPromptForm : Form
 
     public PairingPromptForm(string origin)
     {
-        Text = "PrintAgent — autorisation";
+        Text = Strings.PairingTitle;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
@@ -22,12 +23,12 @@ internal sealed class PairingPromptForm : Form
             AutoSize = false,
             Location = new Point(16, 16),
             Size = new Size(388, 70),
-            Text = $"\"{origin}\"\nveut accéder à vos imprimantes locales."
+            Text = Strings.PairingMessage(origin)
         };
 
         var allow = new Button
         {
-            Text = "Autoriser",
+            Text = Strings.PairingAllow,
             Location = new Point(220, 110),
             Size = new Size(90, 28),
             DialogResult = DialogResult.Yes
@@ -36,7 +37,7 @@ internal sealed class PairingPromptForm : Form
 
         var refuse = new Button
         {
-            Text = "Refuser",
+            Text = Strings.PairingRefuse,
             Location = new Point(316, 110),
             Size = new Size(90, 28),
             DialogResult = DialogResult.No

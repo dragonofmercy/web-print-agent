@@ -14,4 +14,7 @@ public sealed class PrintAgentOptions
     public TimeSpan PairingRefusalCooldown { get; init; } = TimeSpan.FromMinutes(5);
     public bool AllowInsecureOrigins { get; init; } = false;
     public string LogLevel { get; init; } = "Information";
+
+    /// <summary>UI language. "auto" (default) follows OS settings. Otherwise an IETF tag like "en", "fr", "fr-FR".</summary>
+    public string Language { get; init; } = "auto";
 }
