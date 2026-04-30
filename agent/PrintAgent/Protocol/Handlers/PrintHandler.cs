@@ -64,14 +64,36 @@ public sealed class PrintHandler : IRpcHandler
                 };
             }
 
+            string? paperSize = null;
+            if (optsEl.TryGetProperty("paperSize", out var ps) && ps.ValueKind == JsonValueKind.String)
+            {
+                paperSize = ps.GetString();
+                if (!IsValidPaperSize(paperSize))
+                    throw new ArgumentException($"Invalid 'paperSize' value: {paperSize}");
+            }
+
             options = new PrintOptions(
                 Copies: optsEl.TryGetProperty("copies", out var c) && c.ValueKind == JsonValueKind.Number ? c.GetInt32() : 1,
-                PaperSize: optsEl.TryGetProperty("paperSize", out var ps) && ps.ValueKind == JsonValueKind.String ? ps.GetString() : null,
+                PaperSize: paperSize,
                 Color: optsEl.TryGetProperty("color", out var col) && col.ValueKind == JsonValueKind.False ? false : true,
                 Orientation: orientation);
         }
 
         var jobId = await _jobs.SubmitAsync(printerName, pdfBytes, options, connection.ConnectionId, ct);
         return new { jobId = jobId.ToString() };
+    }
+
+    private static bool IsValidPaperSize(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return false;
+        if (value.Length > 32) return false;
+        if (value[0] == '-') return false;
+        foreach (var ch in value)
+        {
+            var ok = (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')
+                  || (ch >= '0' && ch <= '9') || ch == ' ' || ch == '_' || ch == '-';
+            if (!ok) return false;
+        }
+        return true;
     }
 }
