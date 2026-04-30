@@ -107,6 +107,38 @@ public class ConfigStoreTests
     }
 
     [Fact]
+    public void RemoveAllowedOrigins_BatchMixedKnownUnknown_RemovesKnownOnlyAndReturnsCount()
+    {
+        using var temp = new TempDirectory();
+        var path = System.IO.Path.Combine(temp.Path, "config.json");
+        var store = new ConfigStore(path);
+        store.AddAllowedOrigin("https://a.test");
+        store.AddAllowedOrigin("https://b.test");
+        store.AddAllowedOrigin("https://c.test");
+
+        var removed = store.RemoveAllowedOrigins(new[] { "https://a.test", "https://nope.test", "https://c.test" });
+
+        removed.Should().Be(2);
+        new ConfigStore(path).GetAllowedOrigins().Should().Equal("https://b.test");
+    }
+
+    [Fact]
+    public void RemoveAllowedOrigins_NoneMatch_DoesNotPersist()
+    {
+        using var temp = new TempDirectory();
+        var path = System.IO.Path.Combine(temp.Path, "config.json");
+        var store = new ConfigStore(path);
+        store.AddAllowedOrigin("https://a.test");
+        var lastWrite = System.IO.File.GetLastWriteTimeUtc(path);
+
+        Thread.Sleep(50);
+        var removed = store.RemoveAllowedOrigins(new[] { "https://nope.test", "https://other.test" });
+
+        removed.Should().Be(0);
+        System.IO.File.GetLastWriteTimeUtc(path).Should().Be(lastWrite);
+    }
+
+    [Fact]
     public void ClearAllowedOrigins_ReturnsRemovedCountAndPersists()
     {
         using var temp = new TempDirectory();

@@ -66,6 +66,19 @@ public sealed class ConfigStore
         }
     }
 
+    public int RemoveAllowedOrigins(IEnumerable<string> origins)
+    {
+        lock (_lock)
+        {
+            var model = Load();
+            var removed = 0;
+            foreach (var origin in origins)
+                if (model.AllowedOrigins.Remove(origin)) removed++;
+            if (removed > 0) Save(model);
+            return removed;
+        }
+    }
+
     public int ClearAllowedOrigins()
     {
         lock (_lock)

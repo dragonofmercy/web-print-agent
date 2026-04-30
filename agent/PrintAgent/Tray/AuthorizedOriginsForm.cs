@@ -69,13 +69,9 @@ internal sealed class AuthorizedOriginsForm : Form
         btnClose.DialogResult = DialogResult.Cancel;
         btnClose.Click += (_, _) => Close();
 
-        // 8 px gap between adjacent right-side buttons, no margin on the
-        // outermost buttons so they align flush with the ListView edges.
         _btnRemoveSelected.Margin = new Padding(0, 0, 8, 0);
         _btnRemoveAll.Margin = new Padding(0, 0, 8, 0);
 
-        // Refresh on the left (secondary), destructive + close on the right.
-        // Both groups share the same 12 px outer gutter as the ListView.
         var leftButtons = new FlowLayoutPanel
         {
             FlowDirection = FlowDirection.LeftToRight,
@@ -167,33 +163,21 @@ internal sealed class AuthorizedOriginsForm : Form
     {
         var selected = _listView.SelectedItems.Cast<ListViewItem>().Select(i => i.Text).ToList();
         if (selected.Count == 0) return;
+        if (!Confirm(Strings.OriginsConfirmRemove(selected.Count), MessageBoxIcon.Question)) return;
 
-        var result = MessageBox.Show(
-            this,
-            Strings.OriginsConfirmRemove(selected.Count),
-            "PrintAgent",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question);
-        if (result != DialogResult.Yes) return;
-
-        foreach (var origin in selected)
-            _configStore.RemoveAllowedOrigin(origin);
+        _configStore.RemoveAllowedOrigins(selected);
         Reload();
     }
 
     private void RemoveAll()
     {
         if (_listView.Items.Count == 0) return;
-
-        var result = MessageBox.Show(
-            this,
-            Strings.OriginsConfirmRemoveAll,
-            "PrintAgent",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Warning);
-        if (result != DialogResult.Yes) return;
+        if (!Confirm(Strings.OriginsConfirmRemoveAll, MessageBoxIcon.Warning)) return;
 
         _configStore.ClearAllowedOrigins();
         Reload();
     }
+
+    private bool Confirm(string message, MessageBoxIcon icon)
+        => MessageBox.Show(this, message, "PrintAgent", MessageBoxButtons.YesNo, icon) == DialogResult.Yes;
 }
