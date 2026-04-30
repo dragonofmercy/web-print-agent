@@ -24,6 +24,7 @@ public sealed class PrinterService : IPrinterService
             catch { status = "Unknown"; }
 
             string[] paperSizes;
+            string[] paperSources;
             try
             {
                 var settings = new PrinterSettings { PrinterName = name };
@@ -33,14 +34,25 @@ public sealed class PrinterService : IPrinterService
                     .Where(s => !string.IsNullOrWhiteSpace(s))
                     .Distinct(StringComparer.Ordinal)
                     .ToArray();
+                paperSources = settings.PaperSources
+                    .Cast<PaperSource>()
+                    .Select(s => s.SourceName)
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray();
             }
-            catch { paperSizes = Array.Empty<string>(); }
+            catch
+            {
+                paperSizes = Array.Empty<string>();
+                paperSources = Array.Empty<string>();
+            }
 
             result.Add(new PrinterInfo(
                 Name: name,
                 IsDefault: string.Equals(name, defaults, StringComparison.Ordinal),
                 Status: status,
-                PaperSizes: paperSizes));
+                PaperSizes: paperSizes,
+                PaperSources: paperSources));
         }
 
         return result;

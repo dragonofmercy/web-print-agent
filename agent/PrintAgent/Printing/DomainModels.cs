@@ -1,12 +1,18 @@
 namespace PrintAgent.Printing;
 
-public sealed record PrinterInfo(string Name, bool IsDefault, string Status, string[] PaperSizes);
+public sealed record PrinterInfo(
+    string Name,
+    bool IsDefault,
+    string Status,
+    string[] PaperSizes,
+    string[] PaperSources);
 
 public sealed record PrintOptions(
     int Copies = 1,
     string? PaperSize = null,
     bool Color = true,
-    PrintOrientation Orientation = PrintOrientation.Default);
+    PrintOrientation Orientation = PrintOrientation.Default,
+    string? Tray = null);
 
 public enum PrintOrientation { Default, Portrait, Landscape }
 

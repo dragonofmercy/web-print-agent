@@ -3,6 +3,7 @@ export interface PrinterInfo {
   isDefault: boolean;
   status: string;
   paperSizes: string[];
+  paperSources: string[];
 }
 
 export interface PrintOptions {
@@ -10,6 +11,7 @@ export interface PrintOptions {
   paperSize?: string;
   color?: boolean;
   orientation?: 'portrait' | 'landscape';
+  tray?: string;
 }
 
 export interface PrintRequest {

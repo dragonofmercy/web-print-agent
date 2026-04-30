@@ -32,7 +32,7 @@ public class KestrelHostIntegrationTests
             .Returns(PairingDecision.Approved);
 
         var printerService = Substitute.For<IPrinterService>();
-        printerService.List().Returns(new[] { new PrinterInfo("HP", true, "Idle", new[] { "A4" }) });
+        printerService.List().Returns(new[] { new PrinterInfo("HP", true, "Idle", new[] { "A4" }, new[] { "Tray 1" }) });
 
         var router = new RpcRouter(new IRpcHandler[]
         {
