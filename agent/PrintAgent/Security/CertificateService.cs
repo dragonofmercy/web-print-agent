@@ -83,6 +83,27 @@ public static class CertificateService
         }
     }
 
+    /// <summary>
+    /// Removes any CN=localhost certificates installed by PrintAgent from the CurrentUser Trusted Root store.
+    /// Only removes certs with a validity period longer than 5 years to avoid touching other localhost certs.
+    /// </summary>
+    public static void TryUninstallFromTrustedRoot()
+    {
+        try
+        {
+            using var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
+            store.Open(OpenFlags.ReadWrite);
+            var toRemove = store.Certificates
+                .Find(X509FindType.FindBySubjectDistinguishedName, "CN=localhost", false)
+                .Where(c => (c.NotAfter - c.NotBefore).TotalDays > 365 * 5)
+                .ToList();
+            foreach (var cert in toRemove)
+                store.Remove(cert);
+            store.Close();
+        }
+        catch { /* best effort -- silent failure acceptable */ }
+    }
+
     private static void WritePassword(string path, string password)
     {
         var bytes = System.Text.Encoding.UTF8.GetBytes(password);

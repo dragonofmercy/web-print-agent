@@ -20,7 +20,15 @@ internal static class Program
     [STAThread]
     static void Main()
     {
-        VelopackApp.Build().Run();
+        VelopackApp.Build()
+            .OnFirstRun(_ => CreateStartupShortcut(Environment.ProcessPath ?? AppContext.BaseDirectory))
+            .OnBeforeUninstallFastCallback(_ =>
+            {
+                KillRunningInstance();
+                RemoveStartupShortcut();
+                CertificateService.TryUninstallFromTrustedRoot();
+            })
+            .Run();
 
         using var mutex = new Mutex(initiallyOwned: true, "Global\\PrintAgent.SingleInstance", out var isOwner);
         if (!isOwner) return;
@@ -152,5 +160,51 @@ internal static class Program
         var ha = sha.ComputeHash(fa);
         var hb = sha.ComputeHash(fb);
         return ha.SequenceEqual(hb);
+    }
+
+    private static void CreateStartupShortcut(string? targetExe)
+    {
+        if (string.IsNullOrEmpty(targetExe)) return;
+        try
+        {
+            var startupFolder = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
+            var shortcutPath = Path.Combine(startupFolder, "PrintAgent.lnk");
+            if (File.Exists(shortcutPath)) return;
+            var shellType = Type.GetTypeFromProgID("WScript.Shell");
+            if (shellType is null) return;
+            dynamic shell = Activator.CreateInstance(shellType)!;
+            var shortcut = shell.CreateShortcut(shortcutPath);
+            shortcut.TargetPath = targetExe;
+            shortcut.WorkingDirectory = Path.GetDirectoryName(targetExe);
+            shortcut.Description = "PrintAgent";
+            shortcut.Save();
+        }
+        catch { /* best effort */ }
+    }
+
+    private static void RemoveStartupShortcut()
+    {
+        try
+        {
+            var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Startup), "PrintAgent.lnk");
+            if (File.Exists(path)) File.Delete(path);
+        }
+        catch { /* best effort */ }
+    }
+
+    private static void KillRunningInstance()
+    {
+        try
+        {
+            foreach (var process in System.Diagnostics.Process.GetProcessesByName("PrintAgent"))
+            {
+                if (process.Id != System.Diagnostics.Process.GetCurrentProcess().Id)
+                {
+                    process.Kill(entireProcessTree: true);
+                    process.WaitForExit(3000);
+                }
+            }
+        }
+        catch { /* best effort */ }
     }
 }
