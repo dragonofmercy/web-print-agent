@@ -36,7 +36,7 @@ public sealed class PrinterService : IPrinterService
                     .ToArray();
                 paperSources = settings.PaperSources
                     .Cast<PaperSource>()
-                    .Select(s => s.SourceName)
+                    .Select(s => !string.IsNullOrWhiteSpace(s.SourceName) ? s.SourceName : s.Kind.ToString())
                     .Where(s => !string.IsNullOrWhiteSpace(s))
                     .Distinct(StringComparer.Ordinal)
                     .ToArray();
@@ -60,8 +60,13 @@ public sealed class PrinterService : IPrinterService
 
     private static string QueryStatus(string printerName)
     {
-        var escaped = printerName.Replace("'", "''");
-        var query = new ObjectQuery($"SELECT PrinterStatus FROM Win32_Printer WHERE Name = '{escaped}'");
+        // Match by Name AND ShareName because network printers
+        // (\\server\printer) appear locally under their own Name OR via the
+        // share path; either form may show up depending on how the driver
+        // was registered.
+        var escaped = printerName.Replace("\\", "\\\\").Replace("'", "''");
+        var query = new ObjectQuery(
+            $"SELECT PrinterStatus FROM Win32_Printer WHERE Name = '{escaped}' OR ShareName = '{escaped}'");
         using var searcher = new ManagementObjectSearcher(query);
         foreach (ManagementObject mo in searcher.Get())
         {
@@ -76,6 +81,9 @@ public sealed class PrinterService : IPrinterService
                 _ => "Unknown"
             };
         }
-        return "Unknown";
+        // Network printers managed by another machine's spooler don't show
+        // up in the local Win32_Printer set. We listed it via PrinterSettings
+        // so it is reachable; report Available rather than Unknown.
+        return "Available";
     }
 }
