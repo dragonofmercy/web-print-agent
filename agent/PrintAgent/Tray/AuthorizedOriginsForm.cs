@@ -54,41 +54,28 @@ internal sealed class AuthorizedOriginsForm : Form
         listContainer.Controls.Add(_listView);
         listContainer.Controls.Add(_emptyLabel);
 
-        var btnRefresh = new Button
-        {
-            Text = Strings.OriginsRefresh,
-            AutoSize = true,
-            Padding = new Padding(8, 4, 8, 4),
-        };
+        // Each button: AutoSize for text, no implicit margin (we control spacing
+        // ourselves so the outer edges line up with the ListView's outer edges).
+        var btnRefresh = MakeButton(Strings.OriginsRefresh);
         btnRefresh.Click += (_, _) => Reload();
 
-        _btnRemoveSelected = new Button
-        {
-            Text = Strings.OriginsRemoveSelected,
-            AutoSize = true,
-            Padding = new Padding(8, 4, 8, 4),
-        };
+        _btnRemoveSelected = MakeButton(Strings.OriginsRemoveSelected);
         _btnRemoveSelected.Click += (_, _) => RemoveSelected();
 
-        _btnRemoveAll = new Button
-        {
-            Text = Strings.OriginsRemoveAll,
-            AutoSize = true,
-            Padding = new Padding(8, 4, 8, 4),
-        };
+        _btnRemoveAll = MakeButton(Strings.OriginsRemoveAll);
         _btnRemoveAll.Click += (_, _) => RemoveAll();
 
-        var btnClose = new Button
-        {
-            Text = Strings.OriginsClose,
-            AutoSize = true,
-            Padding = new Padding(8, 4, 8, 4),
-            DialogResult = DialogResult.Cancel,
-        };
+        var btnClose = MakeButton(Strings.OriginsClose);
+        btnClose.DialogResult = DialogResult.Cancel;
         btnClose.Click += (_, _) => Close();
 
+        // 8 px gap between adjacent right-side buttons, no margin on the
+        // outermost buttons so they align flush with the ListView edges.
+        _btnRemoveSelected.Margin = new Padding(0, 0, 8, 0);
+        _btnRemoveAll.Margin = new Padding(0, 0, 8, 0);
+
         // Refresh on the left (secondary), destructive + close on the right.
-        // Both groups align with the inner edges of the ListView (same 12 px gutter).
+        // Both groups share the same 12 px outer gutter as the ListView.
         var leftButtons = new FlowLayoutPanel
         {
             FlowDirection = FlowDirection.LeftToRight,
@@ -103,7 +90,7 @@ internal sealed class AuthorizedOriginsForm : Form
 
         var rightButtons = new FlowLayoutPanel
         {
-            FlowDirection = FlowDirection.RightToLeft,
+            FlowDirection = FlowDirection.LeftToRight,
             Dock = DockStyle.Right,
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
@@ -111,14 +98,15 @@ internal sealed class AuthorizedOriginsForm : Form
             Padding = new Padding(0),
             Margin = new Padding(0),
         };
-        rightButtons.Controls.Add(btnClose);
-        rightButtons.Controls.Add(_btnRemoveAll);
         rightButtons.Controls.Add(_btnRemoveSelected);
+        rightButtons.Controls.Add(_btnRemoveAll);
+        rightButtons.Controls.Add(btnClose);
 
         var buttonRow = new Panel
         {
             Dock = DockStyle.Bottom,
-            Height = 52,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             Padding = new Padding(12, 6, 12, 12),
         };
         buttonRow.Controls.Add(leftButtons);
@@ -132,6 +120,16 @@ internal sealed class AuthorizedOriginsForm : Form
         Load += (_, _) => Reload();
         Resize += (_, _) => ResizeColumn();
     }
+
+    private static Button MakeButton(string text) => new()
+    {
+        Text = text,
+        AutoSize = true,
+        AutoSizeMode = AutoSizeMode.GrowAndShrink,
+        Padding = new Padding(10, 4, 10, 4),
+        Margin = new Padding(0),
+        MinimumSize = new Size(0, 30),
+    };
 
     private void Reload()
     {
