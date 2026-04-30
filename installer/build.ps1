@@ -42,6 +42,8 @@ New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 vpk pack `
     --packId PrintAgent `
     --packVersion $Version `
+    --packTitle "Web Print Agent" `
+    --packAuthors "DragonOfMercy" `
     --packDir $PublishDir `
     --mainExe PrintAgent.exe `
     --icon $IconFile `
