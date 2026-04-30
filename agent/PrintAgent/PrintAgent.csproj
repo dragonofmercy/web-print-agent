@@ -33,5 +33,9 @@
         <None Include="appsettings.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Include="Resources\SumatraPDF.exe" Condition="Exists('Resources\SumatraPDF.exe')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>Resources\SumatraPDF.exe</Link>
+        </None>
     </ItemGroup>
 </Project>
