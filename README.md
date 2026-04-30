@@ -37,7 +37,7 @@ Inspired by tools such as QZ Tray and Dymo Web Service, but kept intentionally m
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Node.js 20+](https://nodejs.org) (for building the TypeScript client)
 - `.NET tool: vpk` — auto-installed globally by `build.ps1` if not present (`dotnet tool install -g vpk`)
-- [SumatraPDF](https://www.sumatrapdfreader.org/download-free-pdf-viewer) — download the **portable 64-bit** build and copy `SumatraPDF.exe` to `agent/PrintAgent/Resources/`. This file is gitignored.
+- [SumatraPDF](https://www.sumatrapdfreader.org/download-free-pdf-viewer) — download the **portable 64-bit** build and save it as `agent/PrintAgent/Resources/SumatraPDF.exe` **before** building. The file is gitignored and embedded at compile time as a resource (extracted to `%APPDATA%\PrintAgent\bin\` on first run).
 
 ### Build the agent
 
@@ -46,7 +46,7 @@ cd agent
 dotnet publish PrintAgent/PrintAgent.csproj -c Release -r win-x64 -p:PublishSingleFile=true
 ```
 
-Output: `agent/PrintAgent/bin/Release/net8.0-windows/win-x64/publish/PrintAgent.exe` (~70 MB, self-contained).
+Output: `agent/PrintAgent/bin/Release/net8.0-windows/win-x64/publish/PrintAgent.exe` (~90 MB self-contained, including the embedded SumatraPDF binary).
 
 ### Run the test suite
 
@@ -68,7 +68,7 @@ Output: `client/dist/printagent-client.js` and `printagent-client.d.ts`. These t
 ### Build the installer
 
 ```sh
-cd build/installer
+cd installer
 ./build.ps1 -Version 0.1.0
 ```
 
@@ -78,6 +78,18 @@ Output in `installer/Output/`:
 - `PrintAgent-0.1.0-full.nupkg` — delta update package
 
 The installer is built with [Velopack](https://velopack.io/). The `vpk` dotnet tool is installed automatically by `build.ps1` if not already present.
+
+## Test page
+
+A standalone HTML demo is shipped alongside the client at `client/dist/index.html`. It connects to a running PrintAgent, lists printers, lets you upload a PDF and watch job events stream in.
+
+```sh
+cd client/dist
+npx http-server -p 8080
+# then open http://localhost:8080/
+```
+
+Note: the page must be served over HTTPS (or from a `https://*.dev.localhost` vhost trusted by your browser) so the `wss://127.0.0.1:8443` connection passes the same-origin and mixed-content checks. By default the agent rejects `http://` origins; flip `AllowInsecureOrigins` to `true` in `appsettings.json` only for local dev.
 
 ## Using the client in a web page
 
