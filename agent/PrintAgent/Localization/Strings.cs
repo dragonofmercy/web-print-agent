@@ -18,21 +18,21 @@ public static class Strings
     private static string Format(string key, params object[] args)
         => string.Format(CultureInfo.CurrentUICulture, Get(key), args);
 
-    public static string PairingTitle => Get("Pairing_Title");
+    public static string PairingTitle => Format("Pairing_Title", AppName);
     public static string PairingMessage(string origin) => Format("Pairing_Message", origin);
     public static string PairingAllow => Get("Pairing_Allow");
     public static string PairingRefuse => Get("Pairing_Refuse");
 
     public static string TrayStatus => Get("Tray_Status");
-    public static string TrayStatusRunning(int port) => Format("Tray_StatusRunning", port);
-    public static string TrayStatusStopped => Get("Tray_StatusStopped");
+    public static string TrayStatusRunning(int port) => Format("Tray_StatusRunning", AppName, port);
+    public static string TrayStatusStopped => Format("Tray_StatusStopped", AppName);
     public static string TrayOpenLogs => Get("Tray_OpenLogs");
     public static string TrayQuit => Get("Tray_Quit");
 
-    public static string BootstrapFailedToStart(string error) => Format("Bootstrap_FailedToStart", error);
+    public static string BootstrapFailedToStart(string error) => Format("Bootstrap_FailedToStart", AppName, error);
 
     public static string TrayAuthorizedOrigins => Get("Tray_AuthorizedOrigins");
-    public static string OriginsTitle => Get("Origins_Title");
+    public static string OriginsTitle => Format("Origins_Title", AppName);
     public static string OriginsEmpty => Get("Origins_Empty");
     public static string OriginsRemoveSelected => Get("Origins_RemoveSelected");
     public static string OriginsRemoveAll => Get("Origins_RemoveAll");
