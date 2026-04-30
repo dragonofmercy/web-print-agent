@@ -4,8 +4,13 @@ using System.Runtime.Versioning;
 
 namespace PrintAgent.Printing;
 
+public interface IPrinterService
+{
+    IReadOnlyList<PrinterInfo> List();
+}
+
 [SupportedOSPlatform("windows")]
-public sealed class PrinterService
+public sealed class PrinterService : IPrinterService
 {
     public IReadOnlyList<PrinterInfo> List()
     {
