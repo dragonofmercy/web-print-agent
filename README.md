@@ -37,7 +37,7 @@ Inspired by tools such as QZ Tray and Dymo Web Service, but kept intentionally m
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Node.js 20+](https://nodejs.org) (for building the TypeScript client)
 - `.NET tool: vpk` — auto-installed globally by `build.ps1` if not present (`dotnet tool install -g vpk`)
-- [SumatraPDF](https://www.sumatrapdfreader.org/download-free-pdf-viewer) — download the **portable 64-bit** build and save it as `agent/PrintAgent/Resources/SumatraPDF.exe` **before** building. The file is gitignored and embedded at compile time as a resource (extracted to `%APPDATA%\PrintAgent\bin\` on first run).
+- [SumatraPDF](https://www.sumatrapdfreader.org/download-free-pdf-viewer) — **already vendored** at `agent/PrintAgent/Resources/SumatraPDF.exe` (3.6.1, ~19 MB, portable 64-bit). It is embedded at compile time as a resource and extracted to `%APPDATA%\PrintAgent\bin\` on first run. To bump the version, replace the file and update `SUMATRAPDF-NOTICE.txt`.
 
 ### Build the agent
 
@@ -116,3 +116,7 @@ pa.on('job.statusChanged', (event) => {
 ## License
 
 [MIT](LICENSE) — Copyright (c) 2026 Dragon.
+
+### Third-party software
+
+PrintAgent embeds a copy of [SumatraPDF](https://www.sumatrapdfreader.org/) (3.6.1) for silent PDF printing. SumatraPDF is licensed under the GNU GPL v3.0 or later. PrintAgent invokes it as a separate subprocess, so the two programs form an aggregate under section 5 of the GPL and PrintAgent's MIT license is unaffected. See [agent/PrintAgent/Resources/SUMATRAPDF-NOTICE.txt](agent/PrintAgent/Resources/SUMATRAPDF-NOTICE.txt) for the full attribution and links to the source code.

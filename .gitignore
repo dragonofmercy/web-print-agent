@@ -15,11 +15,6 @@
 [Pp]roperties/launchSettings.json
 
 # ============================================================
-# Embedded SumatraPDF binary (each contributor downloads their own)
-# ============================================================
-agent/PrintAgent/Resources/SumatraPDF.exe
-
-# ============================================================
 # Node / TypeScript (client/)
 # ============================================================
 client/node_modules/

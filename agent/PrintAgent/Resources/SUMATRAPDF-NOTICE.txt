@@ -1,0 +1,22 @@
+SumatraPDF
+==========
+
+This directory contains a redistributed copy of SumatraPDF, a free and
+open-source PDF reader for Windows. PrintAgent invokes SumatraPDF as a
+separate subprocess (silent print mode) to render and print PDF documents.
+
+  Version embedded:    3.6.1
+  Source:              https://www.sumatrapdfreader.org/
+  Source code:         https://github.com/sumatrapdfreader/sumatrapdf
+  License:             GNU General Public License v3.0 or later (GPL-3.0+)
+  License full text:   https://www.gnu.org/licenses/gpl-3.0.txt
+
+PrintAgent itself is licensed under the MIT license (see LICENSE at the
+repo root). PrintAgent communicates with SumatraPDF only via process
+invocation with command-line arguments, so the two programs are an
+"aggregate" under section 5 of the GPL and PrintAgent's own license is
+unaffected.
+
+The binary in this folder may be replaced with a newer or older portable
+64-bit build downloaded from the Source link above. Update this notice
+file accordingly when bumping the embedded version.
