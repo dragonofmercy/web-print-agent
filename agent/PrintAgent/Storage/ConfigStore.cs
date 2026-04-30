@@ -47,6 +47,38 @@ public sealed class ConfigStore
         }
     }
 
+    public IReadOnlyList<string> GetAllowedOrigins()
+    {
+        lock (_lock)
+        {
+            return Load().AllowedOrigins.ToList();
+        }
+    }
+
+    public bool RemoveAllowedOrigin(string origin)
+    {
+        lock (_lock)
+        {
+            var model = Load();
+            if (!model.AllowedOrigins.Remove(origin)) return false;
+            Save(model);
+            return true;
+        }
+    }
+
+    public int ClearAllowedOrigins()
+    {
+        lock (_lock)
+        {
+            var model = Load();
+            var count = model.AllowedOrigins.Count;
+            if (count == 0) return 0;
+            model.AllowedOrigins.Clear();
+            Save(model);
+            return count;
+        }
+    }
+
     public void SetLastBoundPort(int port)
     {
         lock (_lock)

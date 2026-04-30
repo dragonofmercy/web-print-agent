@@ -58,7 +58,7 @@ internal static class Program
             var origins = new OriginAuthorizationService(configStore, options.AllowInsecureOrigins);
 
             int? boundPortRef = null;
-            var trayHost = new TrayIconHost(paths, getBoundPort: () => boundPortRef, onQuit: () => Application.Exit());
+            var trayHost = new TrayIconHost(paths, configStore, getBoundPort: () => boundPortRef, onQuit: () => Application.Exit());
             trayHost.Show();
             var pairingUi = new WinFormsPairingUi(trayHost.UiAnchor);
             var pairing = new PairingService(configStore, pairingUi,

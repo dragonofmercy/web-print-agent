@@ -65,4 +65,68 @@ public class ConfigStoreTests
 
         new ConfigStore(path).Load().LastBoundPort.Should().Be(8444);
     }
+
+    [Fact]
+    public void GetAllowedOrigins_ReturnsSnapshotInsertionOrder()
+    {
+        using var temp = new TempDirectory();
+        var store = new ConfigStore(System.IO.Path.Combine(temp.Path, "config.json"));
+        store.AddAllowedOrigin("https://a.test");
+        store.AddAllowedOrigin("https://b.test");
+        store.AddAllowedOrigin("https://c.test");
+
+        var origins = store.GetAllowedOrigins();
+
+        origins.Should().Equal("https://a.test", "https://b.test", "https://c.test");
+    }
+
+    [Fact]
+    public void RemoveAllowedOrigin_KnownOrigin_RemovesAndReturnsTrue()
+    {
+        using var temp = new TempDirectory();
+        var path = System.IO.Path.Combine(temp.Path, "config.json");
+        var store = new ConfigStore(path);
+        store.AddAllowedOrigin("https://a.test");
+        store.AddAllowedOrigin("https://b.test");
+
+        var removed = store.RemoveAllowedOrigin("https://a.test");
+
+        removed.Should().BeTrue();
+        new ConfigStore(path).GetAllowedOrigins().Should().Equal("https://b.test");
+    }
+
+    [Fact]
+    public void RemoveAllowedOrigin_UnknownOrigin_ReturnsFalse()
+    {
+        using var temp = new TempDirectory();
+        var store = new ConfigStore(System.IO.Path.Combine(temp.Path, "config.json"));
+        store.AddAllowedOrigin("https://a.test");
+
+        store.RemoveAllowedOrigin("https://nope.test").Should().BeFalse();
+        store.GetAllowedOrigins().Should().Equal("https://a.test");
+    }
+
+    [Fact]
+    public void ClearAllowedOrigins_ReturnsRemovedCountAndPersists()
+    {
+        using var temp = new TempDirectory();
+        var path = System.IO.Path.Combine(temp.Path, "config.json");
+        var store = new ConfigStore(path);
+        store.AddAllowedOrigin("https://a.test");
+        store.AddAllowedOrigin("https://b.test");
+
+        var count = store.ClearAllowedOrigins();
+
+        count.Should().Be(2);
+        new ConfigStore(path).GetAllowedOrigins().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ClearAllowedOrigins_OnEmpty_ReturnsZero()
+    {
+        using var temp = new TempDirectory();
+        var store = new ConfigStore(System.IO.Path.Combine(temp.Path, "config.json"));
+
+        store.ClearAllowedOrigins().Should().Be(0);
+    }
 }

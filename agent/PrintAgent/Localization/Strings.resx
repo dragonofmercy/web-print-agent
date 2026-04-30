@@ -47,4 +47,37 @@ is requesting access to your local printers.</value>
     <value>PrintAgent failed to start:
 {0}</value>
   </data>
+
+  <data name="Tray_AuthorizedOrigins" xml:space="preserve">
+    <value>Authorized origins...</value>
+  </data>
+  <data name="Origins_Title" xml:space="preserve">
+    <value>PrintAgent — Authorized origins</value>
+  </data>
+  <data name="Origins_Header_Origin" xml:space="preserve">
+    <value>Origin</value>
+  </data>
+  <data name="Origins_Empty" xml:space="preserve">
+    <value>No authorized origin yet. They are added when you accept a pairing prompt.</value>
+  </data>
+  <data name="Origins_RemoveSelected" xml:space="preserve">
+    <value>Remove selected</value>
+  </data>
+  <data name="Origins_RemoveAll" xml:space="preserve">
+    <value>Remove all</value>
+  </data>
+  <data name="Origins_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Origins_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Origins_ConfirmRemove" xml:space="preserve">
+    <value>Remove {0} origin(s)?
+They will need to pair again on next connection.</value>
+  </data>
+  <data name="Origins_ConfirmRemoveAll" xml:space="preserve">
+    <value>Remove ALL authorized origins?
+They will need to pair again on next connection.</value>
+  </data>
 </root>

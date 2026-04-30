@@ -12,14 +12,17 @@ public sealed class TrayIconHost : IDisposable
     private readonly NotifyIcon _icon = new();
     private readonly ContextMenuStrip _menu = new();
     private readonly Paths _paths;
+    private readonly ConfigStore _configStore;
     private readonly Func<int?> _getBoundPort;
     private readonly Action _onQuit;
+    private AuthorizedOriginsForm? _originsForm;
 
     public Control UiAnchor { get; } = new Control();
 
-    public TrayIconHost(Paths paths, Func<int?> getBoundPort, Action onQuit)
+    public TrayIconHost(Paths paths, ConfigStore configStore, Func<int?> getBoundPort, Action onQuit)
     {
         _paths = paths;
+        _configStore = configStore;
         _getBoundPort = getBoundPort;
         _onQuit = onQuit;
         _ = UiAnchor.Handle; // force handle creation on UI thread
@@ -40,6 +43,9 @@ public sealed class TrayIconHost : IDisposable
                 "PrintAgent", MessageBoxButtons.OK, MessageBoxIcon.Information);
         };
 
+        var originsItem = new ToolStripMenuItem(Strings.TrayAuthorizedOrigins);
+        originsItem.Click += (_, _) => OpenOriginsForm();
+
         var logsItem = new ToolStripMenuItem(Strings.TrayOpenLogs);
         logsItem.Click += (_, _) =>
         {
@@ -51,6 +57,7 @@ public sealed class TrayIconHost : IDisposable
         quitItem.Click += (_, _) => _onQuit();
 
         _menu.Items.Add(statusItem);
+        _menu.Items.Add(originsItem);
         _menu.Items.Add(logsItem);
         _menu.Items.Add(new ToolStripSeparator());
         _menu.Items.Add(quitItem);
@@ -58,8 +65,22 @@ public sealed class TrayIconHost : IDisposable
         _icon.ContextMenuStrip = _menu;
     }
 
+    private void OpenOriginsForm()
+    {
+        if (_originsForm is { IsDisposed: false })
+        {
+            _originsForm.Activate();
+            return;
+        }
+        _originsForm = new AuthorizedOriginsForm(_configStore);
+        _originsForm.FormClosed += (_, _) => _originsForm = null;
+        _originsForm.Show();
+    }
+
     public void Dispose()
     {
+        _originsForm?.Close();
+        _originsForm?.Dispose();
         _icon.Visible = false;
         _icon.Dispose();
         _menu.Dispose();

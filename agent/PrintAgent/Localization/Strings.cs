@@ -27,6 +27,17 @@ public static class Strings
 
     public static string BootstrapFailedToStart(string error) => Format("Bootstrap_FailedToStart", error);
 
+    public static string TrayAuthorizedOrigins => Get("Tray_AuthorizedOrigins");
+    public static string OriginsTitle => Get("Origins_Title");
+    public static string OriginsHeaderOrigin => Get("Origins_Header_Origin");
+    public static string OriginsEmpty => Get("Origins_Empty");
+    public static string OriginsRemoveSelected => Get("Origins_RemoveSelected");
+    public static string OriginsRemoveAll => Get("Origins_RemoveAll");
+    public static string OriginsRefresh => Get("Origins_Refresh");
+    public static string OriginsClose => Get("Origins_Close");
+    public static string OriginsConfirmRemove(int count) => Format("Origins_ConfirmRemove", count);
+    public static string OriginsConfirmRemoveAll => Get("Origins_ConfirmRemoveAll");
+
     /// <summary>
     /// Selects the UI culture for the rest of the process.
     /// "auto" (default) keeps the OS-detected culture; otherwise an explicit

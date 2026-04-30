@@ -47,4 +47,37 @@ veut accéder à vos imprimantes locales.</value>
     <value>Échec du démarrage de PrintAgent :
 {0}</value>
   </data>
+
+  <data name="Tray_AuthorizedOrigins" xml:space="preserve">
+    <value>Origines autorisées…</value>
+  </data>
+  <data name="Origins_Title" xml:space="preserve">
+    <value>PrintAgent — Origines autorisées</value>
+  </data>
+  <data name="Origins_Header_Origin" xml:space="preserve">
+    <value>Origine</value>
+  </data>
+  <data name="Origins_Empty" xml:space="preserve">
+    <value>Aucune origine autorisée pour le moment. Elles sont ajoutées quand vous acceptez une demande d'autorisation.</value>
+  </data>
+  <data name="Origins_RemoveSelected" xml:space="preserve">
+    <value>Supprimer la sélection</value>
+  </data>
+  <data name="Origins_RemoveAll" xml:space="preserve">
+    <value>Tout supprimer</value>
+  </data>
+  <data name="Origins_Refresh" xml:space="preserve">
+    <value>Actualiser</value>
+  </data>
+  <data name="Origins_Close" xml:space="preserve">
+    <value>Fermer</value>
+  </data>
+  <data name="Origins_ConfirmRemove" xml:space="preserve">
+    <value>Supprimer {0} origine(s) ?
+Elles devront repasser par la procédure d'autorisation à la prochaine connexion.</value>
+  </data>
+  <data name="Origins_ConfirmRemoveAll" xml:space="preserve">
+    <value>Supprimer TOUTES les origines autorisées ?
+Elles devront repasser par la procédure d'autorisation à la prochaine connexion.</value>
+  </data>
 </root>
