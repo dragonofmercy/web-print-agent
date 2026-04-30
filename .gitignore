@@ -1,0 +1,55 @@
+# ============================================================
+# .NET / Visual Studio
+# ============================================================
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+**/.vs/
+**/publish/
+**/TestResults/
+**/coverage/
+*.userprefs
+*.userosscache
+*.sln.docstates
+[Pp]roperties/launchSettings.json
+
+# ============================================================
+# Embedded SumatraPDF binary (each contributor downloads their own)
+# ============================================================
+agent/PrintAgent/Resources/SumatraPDF.exe
+
+# ============================================================
+# Node / TypeScript (client/)
+# ============================================================
+client/node_modules/
+client/*.tsbuildinfo
+# dist/ is intentionally COMMITTED so consumers can copy directly.
+
+# ============================================================
+# Inno Setup output
+# ============================================================
+installer/Output/
+installer/*.exe
+
+# ============================================================
+# IDE / editors
+# ============================================================
+.idea/
+.vscode/
+*.swp
+*~
+
+# ============================================================
+# OS
+# ============================================================
+Thumbs.db
+Desktop.ini
+.DS_Store
+ehthumbs.db
+
+# ============================================================
+# Logs and dumps
+# ============================================================
+*.log
+*.stackdump

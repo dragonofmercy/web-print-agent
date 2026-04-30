@@ -1,0 +1,25 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# C# / .NET solution files
+[*.{cs,csproj,sln}]
+indent_size = 4
+
+# TypeScript / JavaScript / JSON / YAML use 2-space indent
+[*.{ts,tsx,js,jsx,json,yaml,yml}]
+indent_size = 2
+
+# Markdown preserves trailing whitespace (line breaks)
+[*.md]
+trim_trailing_whitespace = false
+
+# Inno Setup script
+[*.iss]
+indent_size = 4
