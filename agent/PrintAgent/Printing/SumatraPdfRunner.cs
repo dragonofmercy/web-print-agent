@@ -21,6 +21,11 @@ public sealed class SumatraPdfRunner : ISumatraRunner
         if (options.Copies > 1) settings.Add($"{options.Copies}x");
         if (!string.IsNullOrEmpty(options.PaperSize)) settings.Add($"paper={options.PaperSize}");
         if (!options.Color) settings.Add("monochrome");
+        switch (options.Orientation)
+        {
+            case PrintOrientation.Portrait: settings.Add("portrait"); break;
+            case PrintOrientation.Landscape: settings.Add("landscape"); break;
+        }
 
         if (settings.Count > 0)
         {

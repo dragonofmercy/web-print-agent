@@ -39,10 +39,22 @@ public sealed class PrintHandler : IRpcHandler
         var options = new PrintOptions();
         if (p.TryGetProperty("options", out var optsEl) && optsEl.ValueKind == JsonValueKind.Object)
         {
+            var orientation = PrintOrientation.Default;
+            if (optsEl.TryGetProperty("orientation", out var or) && or.ValueKind == JsonValueKind.String)
+            {
+                orientation = or.GetString()?.ToLowerInvariant() switch
+                {
+                    "portrait" => PrintOrientation.Portrait,
+                    "landscape" => PrintOrientation.Landscape,
+                    _ => PrintOrientation.Default
+                };
+            }
+
             options = new PrintOptions(
                 Copies: optsEl.TryGetProperty("copies", out var c) && c.ValueKind == JsonValueKind.Number ? c.GetInt32() : 1,
                 PaperSize: optsEl.TryGetProperty("paperSize", out var ps) && ps.ValueKind == JsonValueKind.String ? ps.GetString() : null,
-                Color: optsEl.TryGetProperty("color", out var col) && col.ValueKind == JsonValueKind.False ? false : true);
+                Color: optsEl.TryGetProperty("color", out var col) && col.ValueKind == JsonValueKind.False ? false : true,
+                Orientation: orientation);
         }
 
         var jobId = await _jobs.SubmitAsync(printerName, pdfBytes, options, connection.ConnectionId, ct);

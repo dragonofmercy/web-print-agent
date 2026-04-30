@@ -267,6 +267,14 @@
             <option value="">(printer default)</option>
           </select>
         </label>
+        <label class="field">
+          Orientation
+          <select id="select-orientation">
+            <option value="">(default)</option>
+            <option value="portrait">Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
+        </label>
       </div>
       <div class="row">
         <label class="file-drop" id="file-drop">
@@ -302,6 +310,7 @@
     const selectPrinter = document.getElementById('select-printer')
     const inputCopies = document.getElementById('input-copies')
     const selectPaper = document.getElementById('select-paper')
+    const selectOrientation = document.getElementById('select-orientation')
     const fileDrop = document.getElementById('file-drop')
     const fileInput = document.getElementById('file-input')
     const fileName = document.getElementById('file-name')
@@ -502,12 +511,14 @@
         const printerName = selectPrinter.value
         const copies = Math.max(1, parseInt(inputCopies.value) || 1)
         const paperSize = selectPaper.value || undefined
+        const orientation = selectOrientation.value || undefined
         const pdfBase64 = bytesToBase64(pdfBytes)
-        log('info', `Submitting print job to "${printerName}" (${copies}x${paperSize ? ', ' + paperSize : ''})`)
+        const optsLog = [copies + 'x', paperSize, orientation].filter(Boolean).join(', ')
+        log('info', `Submitting print job to "${printerName}" (${optsLog})`)
         const { jobId } = await pa.print({
           printerName,
           pdfBase64,
-          options: { copies, paperSize, color: true }
+          options: { copies, paperSize, color: true, orientation }
         })
         log('ok', `Job submitted: ${jobId}`)
       } catch (e) {

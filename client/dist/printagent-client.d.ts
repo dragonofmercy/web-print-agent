@@ -8,6 +8,7 @@ export interface PrintOptions {
     copies?: number;
     paperSize?: string;
     color?: boolean;
+    orientation?: 'portrait' | 'landscape';
 }
 export interface PrintRequest {
     printerName: string;

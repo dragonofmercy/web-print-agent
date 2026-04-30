@@ -44,4 +44,37 @@ public class SumatraPdfRunnerTests
 
         args.Should().NotContain("-print-settings");
     }
+
+    [Fact]
+    public void BuildArguments_LandscapeOrientation_AddsLandscapeSetting()
+    {
+        var args = SumatraPdfRunner.BuildArguments("HP", "x.pdf",
+            new PrintOptions(Orientation: PrintOrientation.Landscape));
+
+        var idx = args.IndexOf("-print-settings");
+        idx.Should().BeGreaterOrEqualTo(0);
+        args[idx + 1].Should().Be("landscape");
+    }
+
+    [Fact]
+    public void BuildArguments_PortraitOrientation_AddsPortraitSetting()
+    {
+        var args = SumatraPdfRunner.BuildArguments("HP", "x.pdf",
+            new PrintOptions(Orientation: PrintOrientation.Portrait));
+
+        var idx = args.IndexOf("-print-settings");
+        idx.Should().BeGreaterOrEqualTo(0);
+        args[idx + 1].Should().Be("portrait");
+    }
+
+    [Fact]
+    public void BuildArguments_OrientationCombinedWithOtherSettings_AppendsAtTheEnd()
+    {
+        var args = SumatraPdfRunner.BuildArguments("HP", "x.pdf",
+            new PrintOptions(Copies: 2, PaperSize: "A4", Color: false, Orientation: PrintOrientation.Landscape));
+
+        var idx = args.IndexOf("-print-settings");
+        idx.Should().BeGreaterOrEqualTo(0);
+        args[idx + 1].Should().Be("2x,paper=A4,monochrome,landscape");
+    }
 }
