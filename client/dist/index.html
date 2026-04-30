@@ -418,7 +418,9 @@
           name.textContent = p.name
           const meta = document.createElement('div')
           meta.className = 'meta'
-          meta.textContent = `${p.status} - ${p.paperSizes.length} paper sizes - ${p.paperSources.length} trays`
+          const sizesCount = p.paperSizes?.length ?? 0
+          const traysCount = p.paperSources?.length ?? 0
+          meta.textContent = `${p.status} - ${sizesCount} paper sizes - ${traysCount} trays`
           card.appendChild(name)
           card.appendChild(meta)
           printersDiv.appendChild(card)
