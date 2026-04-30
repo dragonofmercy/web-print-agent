@@ -76,7 +76,7 @@ internal static class Program
             {
                 new AgentHelloHandler(pairing),
                 new GetLocalPrintersHandler(printerService),
-                new PrintHandler(jobs, options.MaxMessageBytes),
+                new PrintHandler(jobs, printerService, options.MaxMessageBytes),
                 new GetJobStatusHandler(jobs),
             });
 

@@ -9,11 +9,13 @@ public sealed class PrintHandler : IRpcHandler
     public bool RequiresPairedConnection => true;
 
     private readonly IPrintJobSubmitter _jobs;
+    private readonly IPrinterService _printers;
     private readonly int _maxBytes;
 
-    public PrintHandler(IPrintJobSubmitter jobs, int maxBytes)
+    public PrintHandler(IPrintJobSubmitter jobs, IPrinterService printers, int maxBytes)
     {
         _jobs = jobs;
+        _printers = printers;
         _maxBytes = maxBytes;
     }
 
@@ -29,6 +31,18 @@ public sealed class PrintHandler : IRpcHandler
             throw new ArgumentException("Missing or invalid 'pdfBase64'.");
 
         var printerName = printerEl.GetString()!;
+
+        // Reject argv-poisoning attempts before consulting the printer list.
+        if (printerName.Length == 0 || printerName[0] == '-' || printerName[0] == '/')
+            throw new RpcApplicationException(JsonRpcErrorCodes.PrinterNotFound,
+                $"Printer '{printerName}' is not installed.");
+
+        // Whitelist against the local printer set (defense-in-depth on top of pairing).
+        var installed = _printers.List();
+        if (!installed.Any(pi => string.Equals(pi.Name, printerName, StringComparison.Ordinal)))
+            throw new RpcApplicationException(JsonRpcErrorCodes.PrinterNotFound,
+                $"Printer '{printerName}' is not installed.");
+
         byte[] pdfBytes;
         try { pdfBytes = Convert.FromBase64String(pdfEl.GetString()!); }
         catch (FormatException) { throw new ArgumentException("PdfDecodeFailed: invalid base64."); }
