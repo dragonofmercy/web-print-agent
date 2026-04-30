@@ -263,7 +263,9 @@
         </label>
         <label class="field">
           Paper size
-          <input type="text" id="input-paper" placeholder="A4 (optional)">
+          <select id="select-paper" disabled>
+            <option value="">(printer default)</option>
+          </select>
         </label>
       </div>
       <div class="row">
@@ -299,7 +301,7 @@
     const btnClearLog = document.getElementById('btn-clear-log')
     const selectPrinter = document.getElementById('select-printer')
     const inputCopies = document.getElementById('input-copies')
-    const inputPaper = document.getElementById('input-paper')
+    const selectPaper = document.getElementById('select-paper')
     const fileDrop = document.getElementById('file-drop')
     const fileInput = document.getElementById('file-input')
     const fileName = document.getElementById('file-name')
@@ -310,6 +312,7 @@
     const pa = new PrintAgent()
     let connected = false
     let pdfBytes = null
+    const printersByName = new Map()
 
     function setStatus(state, text) {
       dot.className = 'dot ' + state
@@ -341,6 +344,7 @@
       btnConnect.textContent = 'Connect'
       btnList.disabled = true
       selectPrinter.disabled = true
+      selectPaper.disabled = true
       btnPrint.disabled = true
       log('warn', 'Connection closed')
     })
@@ -386,7 +390,10 @@
         const printers = await pa.getLocalPrinters()
         printersDiv.innerHTML = ''
         selectPrinter.innerHTML = ''
+        printersByName.clear()
         for (const p of printers) {
+          printersByName.set(p.name, p)
+
           const card = document.createElement('div')
           card.className = 'printer' + (p.isDefault ? ' default' : '')
           const name = document.createElement('div')
@@ -407,9 +414,30 @@
         }
         printersSummary.textContent = `${printers.length} printer(s)`
         log('ok', `Got ${printers.length} printer(s)`)
+        refreshPaperSizes()
         updatePrintButton()
       } catch (e) {
         log('err', `getLocalPrinters error: ${e?.message ?? String(e)}`)
+      }
+    }
+
+    function refreshPaperSizes() {
+      const printer = printersByName.get(selectPrinter.value)
+      selectPaper.innerHTML = ''
+      const defaultOpt = document.createElement('option')
+      defaultOpt.value = ''
+      defaultOpt.textContent = '(printer default)'
+      selectPaper.appendChild(defaultOpt)
+      if (printer && printer.paperSizes && printer.paperSizes.length > 0) {
+        for (const size of printer.paperSizes) {
+          const opt = document.createElement('option')
+          opt.value = size
+          opt.textContent = size
+          selectPaper.appendChild(opt)
+        }
+        selectPaper.disabled = false
+      } else {
+        selectPaper.disabled = true
       }
     }
 
@@ -454,7 +482,10 @@
     function updatePrintButton() {
       btnPrint.disabled = !(connected && pdfBytes && selectPrinter.value)
     }
-    selectPrinter.addEventListener('change', updatePrintButton)
+    selectPrinter.addEventListener('change', () => {
+      refreshPaperSizes()
+      updatePrintButton()
+    })
 
     function bytesToBase64(bytes) {
       let binary = ''
@@ -470,7 +501,7 @@
       try {
         const printerName = selectPrinter.value
         const copies = Math.max(1, parseInt(inputCopies.value) || 1)
-        const paperSize = inputPaper.value.trim() || undefined
+        const paperSize = selectPaper.value || undefined
         const pdfBase64 = bytesToBase64(pdfBytes)
         log('info', `Submitting print job to "${printerName}" (${copies}x${paperSize ? ', ' + paperSize : ''})`)
         const { jobId } = await pa.print({
