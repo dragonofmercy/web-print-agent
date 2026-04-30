@@ -10,6 +10,20 @@ To bump the version: download a newer portable 64-bit build from <https://www.su
 
 SumatraPDF is GPL-3.0+ — see `SUMATRAPDF-NOTICE.txt` for the attribution and the link to the source code.
 
-## icon.ico
+## icon.svg / icon.ico
 
-Application icon used for the executable, the tray, and Windows installer entries.
+`icon.svg` is the source of truth for the application icon (derived from [Lucide Printer](https://lucide.dev/icons/printer), ISC license, accent color `#3b82f6`). Edit this file when you want to change the design.
+
+`icon.ico` is the multi-size compiled bundle (16, 20, 24, 32, 40, 48, 64, 128, 256 px) consumed by:
+
+- `<ApplicationIcon>` in `PrintAgent.csproj` — appears in Explorer, Alt-Tab, and the Velopack-generated `Setup.exe` / Add-Remove Programs entry.
+- The system tray (`TrayIconHost`) which loads it as an `<EmbeddedResource>` at `LogicalName=icon.ico`.
+
+To regenerate the ICO after editing the SVG:
+
+```sh
+cd installer
+./build-icon.ps1
+```
+
+The script requires [ImageMagick](https://imagemagick.org/) on PATH (the `magick` CLI). It rasterizes the SVG into 9 PNGs in a temp folder and assembles them into the ICO. Both `icon.svg` and `icon.ico` are committed so casual contributors don't need to regenerate.

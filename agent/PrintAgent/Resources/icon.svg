@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+PrintAgent icon — derived from Lucide "Printer" (https://lucide.dev/icons/printer)
+License: ISC (Lucide). Stroke color is the accent blue used elsewhere in the project.
+
+Source of truth: edit this file and re-run installer/build-icon.ps1 to regenerate icon.ico.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M6 9V2h12v7"/>
+  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+  <rect width="12" height="8" x="6" y="14"/>
+</svg>

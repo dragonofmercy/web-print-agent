@@ -40,6 +40,9 @@
         <EmbeddedResource Include="Resources\SumatraPDF.exe" Condition="Exists('Resources\SumatraPDF.exe')">
             <LogicalName>SumatraPDF.exe</LogicalName>
         </EmbeddedResource>
+        <EmbeddedResource Include="Resources\icon.ico">
+            <LogicalName>icon.ico</LogicalName>
+        </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>

@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Drawing;
+using System.Reflection;
 using System.Windows.Forms;
 using PrintAgent.Localization;
 using PrintAgent.Storage;
@@ -25,7 +27,7 @@ public sealed class TrayIconHost : IDisposable
 
     public void Show()
     {
-        _icon.Icon = SystemIcons.Application;
+        _icon.Icon = LoadEmbeddedIcon() ?? SystemIcons.Application;
         _icon.Visible = true;
         _icon.Text = "PrintAgent";
 
@@ -62,5 +64,19 @@ public sealed class TrayIconHost : IDisposable
         _icon.Dispose();
         _menu.Dispose();
         UiAnchor.Dispose();
+    }
+
+    private static Icon? LoadEmbeddedIcon()
+    {
+        try
+        {
+            using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("icon.ico");
+            if (stream is null) return null;
+            return new Icon(stream, SystemInformation.SmallIconSize);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
