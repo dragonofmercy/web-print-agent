@@ -1,12 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-PrintAgent icon — derived from Lucide "Printer" (https://lucide.dev/icons/printer)
-License: ISC (Lucide). Stroke color is the accent blue used elsewhere in the project.
+PrintAgent icon — derived from Material Line ("line-md") "cloud-alt-print-twotone".
+Source: https://icon-sets.iconify.design/line-md/cloud-alt-print-twotone/
+License: MIT (Line MD by cyberalien — https://github.com/cyberalien/line-md)
+
+Iconify ships the original with SMIL animations from t=0 to ~1.65s. This file is
+the frozen end-state (final values of every animate/set), with the original mask
+expanded to plain paths so any rasterizer (incl. ImageMagick MSVG) renders it
+correctly. Stroke colour is the project accent blue.
 
 Source of truth: edit this file and re-run installer/build-icon.ps1 to regenerate icon.ico.
 -->
-<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M6 9V2h12v7"/>
-  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-  <rect width="12" height="8" x="6" y="14"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24">
+  <g fill="#3b82f6">
+    <!-- Cloud: 30% fill + 100% stroke (matches the original two-tone effect) -->
+    <path
+      d="M7 19h11c2.21 0 4 -1.79 4 -4c0 -2.21 -1.79 -4 -4 -4h-1v-1c0 -2.76 -2.24 -5 -5 -5c-2.42 0 -4.44 1.72 -4.9 4h-0.1c-2.76 0 -5 2.24 -5 5c0 2.76 2.24 5 5 5Z"
+      fill-opacity="0.3"
+      stroke="#3b82f6"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"/>
+    <!-- Paper frame (outer rect minus inner rect via evenodd) -->
+    <path d="M6 11h12v11H6V11ZM8 13v7h8v-7H8Z" fill-rule="evenodd"/>
+    <!-- 4 horizontal text lines on the printed sheet -->
+    <path d="M9 12h6v1H9V12ZM9 14h6v1H9V14ZM9 16h6v1H9V16ZM9 18h6v1H9V18Z"/>
+  </g>
 </svg>
