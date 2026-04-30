@@ -81,15 +81,14 @@ public class PrintJobServiceTests
     {
         using var temp = new TempDirectory();
         var events = new List<JobEvent>();
-        var publisher = new JobEventPublisher
-        {
-            SendAsync = (_, ev, _) => { events.Add(ev); return Task.CompletedTask; }
-        };
+        var publisher = new JobEventPublisher();
+        var conn = Guid.NewGuid();
+        using var sub = publisher.Subscribe(conn, (ev, _) => { events.Add(ev); return Task.CompletedTask; });
         var runner = new FakeRunner();
         var svc = new PrintJobService(publisher, runner, tempDirectory: temp.Path, maxJobsPerConnection: 5);
 
         var jobId = await svc.SubmitAsync("HP", MinimalPdfBytes(), new PrintOptions(),
-            Guid.NewGuid(), CancellationToken.None);
+            conn, CancellationToken.None);
 
         await svc.WaitForJobCompletionAsync(jobId, TimeSpan.FromSeconds(2));
 
@@ -105,15 +104,14 @@ public class PrintJobServiceTests
     {
         using var temp = new TempDirectory();
         var events = new List<JobEvent>();
-        var publisher = new JobEventPublisher
-        {
-            SendAsync = (_, ev, _) => { events.Add(ev); return Task.CompletedTask; }
-        };
+        var publisher = new JobEventPublisher();
+        var conn = Guid.NewGuid();
+        using var sub = publisher.Subscribe(conn, (ev, _) => { events.Add(ev); return Task.CompletedTask; });
         var runner = new FakeRunner { ExitCode = 1, Stderr = "spool error" };
         var svc = new PrintJobService(publisher, runner, tempDirectory: temp.Path, maxJobsPerConnection: 5);
 
         var jobId = await svc.SubmitAsync("HP", MinimalPdfBytes(), new PrintOptions(),
-            Guid.NewGuid(), CancellationToken.None);
+            conn, CancellationToken.None);
 
         await svc.WaitForJobCompletionAsync(jobId, TimeSpan.FromSeconds(2));
 

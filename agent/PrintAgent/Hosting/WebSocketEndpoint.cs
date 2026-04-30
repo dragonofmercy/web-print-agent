@@ -61,23 +61,15 @@ public sealed class WebSocketEndpoint
 
         _activeSockets[connection.ConnectionId] = ws;
 
-        // Subscribe this connection to job events targeted at it.
-        Task LocalJobEventListener(Guid connId, JobEvent ev, CancellationToken ct)
+        using var subscription = _publisher.Subscribe(connection.ConnectionId, (ev, ct) =>
         {
-            if (connId != connection.ConnectionId) return Task.CompletedTask;
             var notif = new JsonRpcNotification
             {
                 Method = "job.statusChanged",
                 Params = new { jobId = ev.JobId.ToString(), status = ev.Status.ToString(), error = ev.Error }
             };
             return SendAsync(ws, RpcRouter.SerializeNotification(notif), ct);
-        }
-        var oldSink = _publisher.SendAsync;
-        _publisher.SendAsync = async (cId, ev, ct) =>
-        {
-            await oldSink(cId, ev, ct);
-            await LocalJobEventListener(cId, ev, ct);
-        };
+        });
 
         try { await ReceiveLoopAsync(ws, connection, context.RequestAborted); }
         catch (OperationCanceledException) { /* normal during shutdown */ }
@@ -85,7 +77,6 @@ public sealed class WebSocketEndpoint
         catch (Exception ex) { _log.Warning(ex, "WS loop error for origin {Origin}", normalizedOrigin); }
         finally
         {
-            _publisher.SendAsync = oldSink;
             _activeSockets.TryRemove(connection.ConnectionId, out _);
         }
     }
