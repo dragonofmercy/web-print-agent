@@ -1,0 +1,13 @@
+{
+  "name": "printagent-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone TypeScript client for PrintAgent.",
+  "scripts": {
+    "build": "esbuild src/printagent-client.ts --bundle --format=esm --outfile=dist/printagent-client.js && tsc --emitDeclarationOnly --outDir dist"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.0",
+    "typescript": "^5.4.0"
+  }
+}
