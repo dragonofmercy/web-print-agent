@@ -70,15 +70,77 @@ public class JobEventPublisherTests
     }
 
     [Fact]
-    public async Task ConcurrentSubscribeUnsubscribe_DoesNotCorruptState()
+    public async Task Publish_SubscriberThrows_DoesNotPropagate()
     {
         var pub = new JobEventPublisher();
-        var connIds = Enumerable.Range(0, 50).Select(_ => Guid.NewGuid()).ToArray();
+        var conn = Guid.NewGuid();
+        using var sub = pub.Subscribe(conn, (_, _) => throw new InvalidOperationException("subscriber boom"));
 
-        await Task.WhenAll(connIds.Select(id => Task.Run(() =>
+        var act = () => pub.PublishAsync(conn, new JobEvent(Guid.NewGuid(), JobStatus.Submitted), default);
+
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task Publish_SubscriberCancelsViaToken_PropagatesOperationCanceled()
+    {
+        var pub = new JobEventPublisher();
+        var conn = Guid.NewGuid();
+        using var sub = pub.Subscribe(conn, (_, ct) =>
         {
-            using var sub = pub.Subscribe(id, (_, _) => Task.CompletedTask);
-            return pub.PublishAsync(id, new JobEvent(Guid.NewGuid(), JobStatus.Submitted), default);
+            ct.ThrowIfCancellationRequested();
+            return Task.CompletedTask;
+        });
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var act = () => pub.PublishAsync(conn, new JobEvent(Guid.NewGuid(), JobStatus.Submitted), cts.Token);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
+    public async Task ConcurrentSubscribers_AllReceiveTheirOwnEventsExactlyOnce()
+    {
+        var pub = new JobEventPublisher();
+        const int N = 100;
+        var connIds = Enumerable.Range(0, N).Select(_ => Guid.NewGuid()).ToArray();
+        var counts = new int[N];
+        var subs = new IDisposable[N];
+
+        await Task.WhenAll(connIds.Select((id, i) => Task.Run(() =>
+        {
+            subs[i] = pub.Subscribe(id, (_, _) =>
+            {
+                Interlocked.Increment(ref counts[i]);
+                return Task.CompletedTask;
+            });
         })));
+
+        await Task.WhenAll(connIds.Select(id =>
+            pub.PublishAsync(id, new JobEvent(Guid.NewGuid(), JobStatus.Submitted), default)));
+
+        counts.Should().AllSatisfy(c => c.Should().Be(1));
+        foreach (var s in subs) s.Dispose();
+    }
+
+    [Fact]
+    public async Task DisposeOfStaleSubscription_DoesNotEvictNewerOneOnSameConnection()
+    {
+        var pub = new JobEventPublisher();
+        var conn = Guid.NewGuid();
+        var newReceived = 0;
+
+        var stale = pub.Subscribe(conn, (_, _) => Task.CompletedTask);
+        using var fresh = pub.Subscribe(conn, (_, _) =>
+        {
+            Interlocked.Increment(ref newReceived);
+            return Task.CompletedTask;
+        });
+
+        stale.Dispose();
+
+        await pub.PublishAsync(conn, new JobEvent(Guid.NewGuid(), JobStatus.Submitted), default);
+        newReceived.Should().Be(1);
     }
 }
