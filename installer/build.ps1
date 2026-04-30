@@ -14,11 +14,12 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$RepoRoot   = Resolve-Path "$PSScriptRoot/.."
-$AgentDir   = Join-Path $RepoRoot "agent"
+$RepoRoot    = Resolve-Path "$PSScriptRoot/.."
+$AgentDir    = Join-Path $RepoRoot "agent"
 $ProjectFile = Join-Path $AgentDir "PrintAgent/PrintAgent.csproj"
-$PublishDir = Join-Path $AgentDir "PrintAgent/bin/Release/net8.0-windows/win-x64/publish"
-$OutputDir  = Join-Path $PSScriptRoot "Output"
+$PublishDir  = Join-Path $AgentDir "PrintAgent/bin/Release/net8.0-windows/win-x64/publish"
+$IconFile    = Join-Path $AgentDir "PrintAgent/Resources/icon.ico"
+$OutputDir   = Join-Path $PSScriptRoot "Output"
 
 Write-Host "==> Publishing PrintAgent $Version..."
 dotnet publish $ProjectFile `
@@ -43,6 +44,7 @@ vpk pack `
     --packVersion $Version `
     --packDir $PublishDir `
     --mainExe PrintAgent.exe `
+    --icon $IconFile `
     --outputDir $OutputDir
 
 if ($LASTEXITCODE -ne 0) { throw "vpk pack failed (exit $LASTEXITCODE)" }
