@@ -19,6 +19,7 @@ $AgentDir    = Join-Path $RepoRoot "agent"
 $ProjectFile = Join-Path $AgentDir "PrintAgent/PrintAgent.csproj"
 $PublishDir  = Join-Path $AgentDir "PrintAgent/bin/Release/net8.0-windows/win-x64/publish"
 $IconFile    = Join-Path $AgentDir "PrintAgent/Resources/icon.ico"
+$SplashFile  = Join-Path $PSScriptRoot "splash.png"
 $OutputDir   = Join-Path $PSScriptRoot "Output"
 
 Write-Host "==> Publishing PrintAgent $Version..."
@@ -47,6 +48,7 @@ vpk pack `
     --packDir $PublishDir `
     --mainExe PrintAgent.exe `
     --icon $IconFile `
+    --splashImage $SplashFile `
     --outputDir $OutputDir
 
 if ($LASTEXITCODE -ne 0) { throw "vpk pack failed (exit $LASTEXITCODE)" }
