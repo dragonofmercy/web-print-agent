@@ -54,9 +54,6 @@ veut accéder à vos imprimantes locales.</value>
   <data name="Origins_Title" xml:space="preserve">
     <value>PrintAgent — Origines autorisées</value>
   </data>
-  <data name="Origins_Header_Origin" xml:space="preserve">
-    <value>Origine</value>
-  </data>
   <data name="Origins_Empty" xml:space="preserve">
     <value>Aucune origine autorisée pour le moment. Elles sont ajoutées quand vous acceptez une demande d'autorisation.</value>
   </data>

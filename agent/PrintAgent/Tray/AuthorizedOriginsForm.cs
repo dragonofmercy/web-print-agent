@@ -18,6 +18,7 @@ internal sealed class AuthorizedOriginsForm : Form
         _configStore = configStore;
 
         Text = Strings.OriginsTitle;
+        Icon = Icons.LoadFull();
         FormBorderStyle = FormBorderStyle.Sizable;
         MinimumSize = new Size(420, 280);
         ClientSize = new Size(560, 380);
@@ -29,13 +30,14 @@ internal sealed class AuthorizedOriginsForm : Form
         _listView = new ListView
         {
             View = View.Details,
+            HeaderStyle = ColumnHeaderStyle.None,
             FullRowSelect = true,
             MultiSelect = true,
             HideSelection = false,
             GridLines = false,
             Dock = DockStyle.Fill,
         };
-        _listView.Columns.Add(Strings.OriginsHeaderOrigin, -2, HorizontalAlignment.Left);
+        _listView.Columns.Add(string.Empty, -2, HorizontalAlignment.Left);
         _listView.SelectedIndexChanged += (_, _) => UpdateButtonState();
 
         _emptyLabel = new Label
@@ -85,18 +87,42 @@ internal sealed class AuthorizedOriginsForm : Form
         };
         btnClose.Click += (_, _) => Close();
 
-        var buttonRow = new FlowLayoutPanel
+        // Refresh on the left (secondary), destructive + close on the right.
+        // Both groups align with the inner edges of the ListView (same 12 px gutter).
+        var leftButtons = new FlowLayoutPanel
+        {
+            FlowDirection = FlowDirection.LeftToRight,
+            Dock = DockStyle.Left,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            WrapContents = false,
+            Padding = new Padding(0),
+            Margin = new Padding(0),
+        };
+        leftButtons.Controls.Add(btnRefresh);
+
+        var rightButtons = new FlowLayoutPanel
         {
             FlowDirection = FlowDirection.RightToLeft,
-            Dock = DockStyle.Bottom,
-            Height = 48,
-            Padding = new Padding(12, 6, 12, 12),
+            Dock = DockStyle.Right,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             WrapContents = false,
+            Padding = new Padding(0),
+            Margin = new Padding(0),
         };
-        buttonRow.Controls.Add(btnClose);
-        buttonRow.Controls.Add(_btnRemoveAll);
-        buttonRow.Controls.Add(_btnRemoveSelected);
-        buttonRow.Controls.Add(btnRefresh);
+        rightButtons.Controls.Add(btnClose);
+        rightButtons.Controls.Add(_btnRemoveAll);
+        rightButtons.Controls.Add(_btnRemoveSelected);
+
+        var buttonRow = new Panel
+        {
+            Dock = DockStyle.Bottom,
+            Height = 52,
+            Padding = new Padding(12, 6, 12, 12),
+        };
+        buttonRow.Controls.Add(leftButtons);
+        buttonRow.Controls.Add(rightButtons);
 
         Controls.Add(listContainer);
         Controls.Add(buttonRow);

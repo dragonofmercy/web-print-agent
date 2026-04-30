@@ -54,9 +54,6 @@ is requesting access to your local printers.</value>
   <data name="Origins_Title" xml:space="preserve">
     <value>PrintAgent — Authorized origins</value>
   </data>
-  <data name="Origins_Header_Origin" xml:space="preserve">
-    <value>Origin</value>
-  </data>
   <data name="Origins_Empty" xml:space="preserve">
     <value>No authorized origin yet. They are added when you accept a pairing prompt.</value>
   </data>

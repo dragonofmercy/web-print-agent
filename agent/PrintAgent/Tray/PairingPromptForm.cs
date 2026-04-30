@@ -11,6 +11,7 @@ internal sealed class PairingPromptForm : Form
     public PairingPromptForm(string origin)
     {
         Text = Strings.PairingTitle;
+        Icon = Icons.LoadFull();
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;

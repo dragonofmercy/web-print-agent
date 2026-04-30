@@ -29,7 +29,6 @@ public static class Strings
 
     public static string TrayAuthorizedOrigins => Get("Tray_AuthorizedOrigins");
     public static string OriginsTitle => Get("Origins_Title");
-    public static string OriginsHeaderOrigin => Get("Origins_Header_Origin");
     public static string OriginsEmpty => Get("Origins_Empty");
     public static string OriginsRemoveSelected => Get("Origins_RemoveSelected");
     public static string OriginsRemoveAll => Get("Origins_RemoveAll");
