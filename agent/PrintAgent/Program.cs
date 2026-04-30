@@ -11,6 +11,7 @@ using PrintAgent.Security;
 using PrintAgent.Storage;
 using PrintAgent.Tray;
 using Serilog;
+using Velopack;
 
 namespace PrintAgent;
 
@@ -19,6 +20,8 @@ internal static class Program
     [STAThread]
     static void Main()
     {
+        VelopackApp.Build().Run();
+
         using var mutex = new Mutex(initiallyOwned: true, "Global\\PrintAgent.SingleInstance", out var isOwner);
         if (!isOwner) return;
 

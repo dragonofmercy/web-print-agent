@@ -17,6 +17,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Velopack" Version="0.0.1298" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.*" />
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.*" />
