@@ -34,9 +34,11 @@
         <None Include="appsettings.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Include="Resources\SumatraPDF.exe" Condition="Exists('Resources\SumatraPDF.exe')">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Link>Resources\SumatraPDF.exe</Link>
-        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Resources\SumatraPDF.exe" Condition="Exists('Resources\SumatraPDF.exe')">
+            <LogicalName>SumatraPDF.exe</LogicalName>
+        </EmbeddedResource>
     </ItemGroup>
 </Project>

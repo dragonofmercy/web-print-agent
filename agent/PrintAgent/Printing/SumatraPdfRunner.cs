@@ -35,6 +35,12 @@ public sealed class SumatraPdfRunner : ISumatraRunner
 
     public async Task<RunResult> RunAsync(string printerName, string pdfPath, PrintOptions options, CancellationToken ct)
     {
+        if (!File.Exists(_binaryPath))
+            throw new FileNotFoundException(
+                $"PDF engine not found at {_binaryPath}. SumatraPDF.exe must be embedded at build time " +
+                $"(place it in agent/PrintAgent/Resources/ before publishing).",
+                _binaryPath);
+
         var psi = new ProcessStartInfo
         {
             FileName = _binaryPath,

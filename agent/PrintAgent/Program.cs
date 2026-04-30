@@ -143,23 +143,20 @@ internal static class Program
 
     private static void ExtractEmbeddedSumatraPdf(string targetPath)
     {
-        var sourcePath = Path.Combine(AppContext.BaseDirectory, "Resources", "SumatraPDF.exe");
-        if (File.Exists(sourcePath))
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SumatraPDF.exe");
+        if (stream is null)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
-            if (!File.Exists(targetPath) || !FileHashesMatch(sourcePath, targetPath))
-                File.Copy(sourcePath, targetPath, overwrite: true);
+            Log.Logger.Warning("SumatraPDF.exe not embedded in this build; PDF printing will fail until the binary is placed at {Path}.", targetPath);
+            return;
         }
-    }
 
-    private static bool FileHashesMatch(string a, string b)
-    {
-        using var sha = System.Security.Cryptography.SHA256.Create();
-        using var fa = File.OpenRead(a);
-        using var fb = File.OpenRead(b);
-        var ha = sha.ComputeHash(fa);
-        var hb = sha.ComputeHash(fb);
-        return ha.SequenceEqual(hb);
+        if (File.Exists(targetPath) && new FileInfo(targetPath).Length == stream.Length)
+            return;
+
+        Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
+        using var output = File.Create(targetPath);
+        stream.CopyTo(output);
+        Log.Logger.Information("Extracted embedded SumatraPDF.exe to {Path} ({Bytes} bytes).", targetPath, stream.Length);
     }
 
     private static void CreateStartupShortcut(string? targetExe)
