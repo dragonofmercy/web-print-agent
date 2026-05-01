@@ -91,7 +91,9 @@ public sealed class PrintHandler : IRpcHandler
         foreach (var ch in value)
         {
             var ok = (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')
-                  || (ch >= '0' && ch <= '9') || ch == ' ' || ch == '_' || ch == '-';
+                  || (ch >= '0' && ch <= '9')
+                  || ch == ' ' || ch == '_' || ch == '-'
+                  || ch == '#' || ch == '(' || ch == ')' || ch == '.';
             if (!ok) return false;
         }
         return true;

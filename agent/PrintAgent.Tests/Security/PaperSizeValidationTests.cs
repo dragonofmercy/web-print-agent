@@ -42,6 +42,10 @@ public class PaperSizeValidationTests
     [InlineData("A3 Extra")]
     [InlineData("US-Letter")]
     [InlineData("env_10")]
+    [InlineData("Envelope #10")]
+    [InlineData("B4 (JIS)")]
+    [InlineData("B5 (JIS)")]
+    [InlineData("Envelope DL")]
     public async Task Handle_PaperSizeWithSafeCharacters_Accepted(string paperSize)
     {
         var jobs = Substitute.For<IPrintJobSubmitter>();
@@ -52,6 +56,13 @@ public class PaperSizeValidationTests
 
         await handler.HandleAsync(MakeParams(paperSize),
             new ConnectionContext { IsPaired = true }, CancellationToken.None);
+
+        await jobs.Received(1).SubmitAsync(
+            "HP",
+            Arg.Any<byte[]>(),
+            Arg.Is<PrintOptions>(o => o.PaperSize == paperSize),
+            Arg.Any<Guid>(),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
