@@ -19,6 +19,7 @@
 # ============================================================
 client/node_modules/
 client/*.tsbuildinfo
+client/package-lock.json
 # dist/ is intentionally COMMITTED so consumers can copy directly.
 
 # ============================================================
