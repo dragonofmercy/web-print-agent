@@ -36,4 +36,25 @@ public class CertificateLifecycleTests
 
         second.Thumbprint.Should().NotBe(firstThumb);
     }
+
+    [FactWindowsOnly]
+    public void TryUninstallFromTrustedRoot_UnknownThumbprint_DoesNotThrow()
+    {
+        // Use a thumbprint that almost certainly does not exist in the store.
+        var unknown = new string('A', 40);
+
+        var act = () => CertificateService.TryUninstallFromTrustedRoot(unknown);
+
+        act.Should().NotThrow();
+    }
+
+    [FactWindowsOnly]
+    public void TryUninstallFromTrustedRoot_EmptyOrWhitespaceThumbprint_DoesNotThrow()
+    {
+        var act1 = () => CertificateService.TryUninstallFromTrustedRoot("");
+        var act2 = () => CertificateService.TryUninstallFromTrustedRoot("   ");
+
+        act1.Should().NotThrow();
+        act2.Should().NotThrow();
+    }
 }

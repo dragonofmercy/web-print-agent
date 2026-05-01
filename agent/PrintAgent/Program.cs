@@ -49,13 +49,24 @@ internal static class Program
         try
         {
             CleanupOrphanTempPdfs(paths);
+            var configStore = new ConfigStore(paths.ConfigFile);
+
             var cert = CertificateService.EnsureCertificate(paths.PfxFile, paths.PfxPasswordFile);
+
+            // If a previously-installed cert exists with a different thumbprint, untrust it
+            // before installing the new one. Keeps at most one PrintAgent cert in the store.
+            var previousThumbprint = configStore.GetCertThumbprint();
+            if (!string.IsNullOrEmpty(previousThumbprint)
+                && !string.Equals(previousThumbprint, cert.Thumbprint, StringComparison.OrdinalIgnoreCase))
+            {
+                CertificateService.TryUninstallFromTrustedRoot(previousThumbprint);
+            }
+
             CertificateService.TryInstallToTrustedRoot(cert);
+            configStore.SetCertThumbprint(cert.Thumbprint);
 
             ExtractEmbeddedSumatraPdf(paths.SumatraPdfPath);
 
-            var configStore = new ConfigStore(paths.ConfigFile);
-            configStore.SetCertThumbprint(cert.Thumbprint);
             var origins = new OriginAuthorizationService(configStore, options.AllowInsecureOrigins);
 
             int? boundPortRef = null;
