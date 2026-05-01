@@ -17,6 +17,7 @@ public sealed class WebSocketEndpoint
     private readonly JobEventPublisher _publisher;
     private readonly ILogger _log;
     private readonly int _maxMessageBytes;
+    private readonly int _maxActiveConnections;
     private readonly ConcurrentDictionary<Guid, WebSocket> _activeSockets = new();
 
     public WebSocketEndpoint(
@@ -24,13 +25,15 @@ public sealed class WebSocketEndpoint
         OriginAuthorizationService origins,
         JobEventPublisher publisher,
         ILogger log,
-        int maxMessageBytes)
+        int maxMessageBytes,
+        int maxActiveConnections)
     {
         _router = router;
         _origins = origins;
         _publisher = publisher;
         _log = log;
         _maxMessageBytes = maxMessageBytes;
+        _maxActiveConnections = maxActiveConnections;
     }
 
     public async Task HandleAsync(HttpContext context)
@@ -46,6 +49,12 @@ public sealed class WebSocketEndpoint
         if (classification == OriginClassification.Rejected)
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return;
+        }
+
+        if (_activeSockets.Count >= _maxActiveConnections)
+        {
+            context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
             return;
         }
 

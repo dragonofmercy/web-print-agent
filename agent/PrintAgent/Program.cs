@@ -77,10 +77,11 @@ internal static class Program
                 refusalCooldown: options.PairingRefusalCooldown, timeout: options.PairingPromptTimeout);
 
             var publisher = new JobEventPublisher();
-            var runner = new SumatraPdfRunner(paths.SumatraPdfPath);
+            var runner = new SumatraPdfRunner(paths.SumatraPdfPath, options.MaxRunSeconds);
             var jobs = new PrintJobService(publisher, runner,
                 tempDirectory: Path.GetTempPath(),
-                maxJobsPerConnection: options.MaxJobsPerConnection);
+                maxJobsPerConnection: options.MaxJobsPerConnection,
+                maxQueuedJobs: options.MaxQueuedJobs);
 
             var printerService = new PrinterService();
 
@@ -92,7 +93,8 @@ internal static class Program
                 new GetJobStatusHandler(jobs),
             });
 
-            var endpoint = new WebSocketEndpoint(router, origins, publisher, logger, options.MaxMessageBytes);
+            var endpoint = new WebSocketEndpoint(router, origins, publisher, logger,
+                options.MaxMessageBytes, options.MaxActiveConnections);
 
             var host = new KestrelHost();
             host.StartAsync(options.PortRange, cert, endpoint, logger, CancellationToken.None).GetAwaiter().GetResult();
@@ -158,6 +160,9 @@ internal static class Program
             PortRange = portRange,
             MaxMessageBytes = section.TryGetProperty("MaxMessageBytes", out var mb) ? mb.GetInt32() : 20 * 1024 * 1024,
             MaxJobsPerConnection = section.TryGetProperty("MaxJobsPerConnection", out var mj) ? mj.GetInt32() : 5,
+            MaxQueuedJobs = section.TryGetProperty("MaxQueuedJobs", out var mqj) ? mqj.GetInt32() : 100,
+            MaxActiveConnections = section.TryGetProperty("MaxActiveConnections", out var mac) ? mac.GetInt32() : 32,
+            MaxRunSeconds = section.TryGetProperty("MaxRunSeconds", out var mrs) ? mrs.GetInt32() : 60,
             PairingPromptTimeout = TimeSpan.FromSeconds(section.TryGetProperty("PairingPromptTimeoutSeconds", out var pt) ? pt.GetInt32() : 60),
             PairingRefusalCooldown = TimeSpan.FromMinutes(section.TryGetProperty("PairingRefusalCooldownMinutes", out var rc) ? rc.GetInt32() : 5),
             AllowInsecureOrigins = section.TryGetProperty("AllowInsecureOrigins", out var aio) && aio.GetBoolean(),

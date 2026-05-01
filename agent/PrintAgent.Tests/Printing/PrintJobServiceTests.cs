@@ -37,7 +37,7 @@ public class PrintJobServiceTests
         using var temp = new TempDirectory();
         var publisher = new JobEventPublisher();
         var runner = new FakeRunner();
-        var svc = new PrintJobService(publisher, runner, tempDirectory: temp.Path, maxJobsPerConnection: 5);
+        var svc = new PrintJobService(publisher, runner, tempDirectory: temp.Path, maxJobsPerConnection: 5, maxQueuedJobs: 100);
 
         var jobId = await svc.SubmitAsync("HP", MinimalPdfBytes(), new PrintOptions(),
             connectionId: Guid.NewGuid(), CancellationToken.None);
@@ -50,7 +50,7 @@ public class PrintJobServiceTests
     {
         using var temp = new TempDirectory();
         var svc = new PrintJobService(new JobEventPublisher(), new FakeRunner(),
-            tempDirectory: temp.Path, maxJobsPerConnection: 5);
+            tempDirectory: temp.Path, maxJobsPerConnection: 5, maxQueuedJobs: 100);
 
         var act = () => svc.SubmitAsync("HP", new byte[] { 0x00, 0x01, 0x02 }, new PrintOptions(),
             Guid.NewGuid(), CancellationToken.None);
@@ -64,7 +64,7 @@ public class PrintJobServiceTests
         using var temp = new TempDirectory();
         var publisher = new JobEventPublisher();
         var runner = new HangingRunner();
-        var svc = new PrintJobService(publisher, runner, tempDirectory: temp.Path, maxJobsPerConnection: 2);
+        var svc = new PrintJobService(publisher, runner, tempDirectory: temp.Path, maxJobsPerConnection: 2, maxQueuedJobs: 100);
         var conn = Guid.NewGuid();
 
         await svc.SubmitAsync("HP", MinimalPdfBytes(), new PrintOptions(), conn, CancellationToken.None);
@@ -85,7 +85,7 @@ public class PrintJobServiceTests
         var conn = Guid.NewGuid();
         using var sub = publisher.Subscribe(conn, (ev, _) => { events.Add(ev); return Task.CompletedTask; });
         var runner = new FakeRunner();
-        var svc = new PrintJobService(publisher, runner, tempDirectory: temp.Path, maxJobsPerConnection: 5);
+        var svc = new PrintJobService(publisher, runner, tempDirectory: temp.Path, maxJobsPerConnection: 5, maxQueuedJobs: 100);
 
         var jobId = await svc.SubmitAsync("HP", MinimalPdfBytes(), new PrintOptions(),
             conn, CancellationToken.None);
@@ -108,7 +108,7 @@ public class PrintJobServiceTests
         var conn = Guid.NewGuid();
         using var sub = publisher.Subscribe(conn, (ev, _) => { events.Add(ev); return Task.CompletedTask; });
         var runner = new FakeRunner { ExitCode = 1, Stderr = "spool error" };
-        var svc = new PrintJobService(publisher, runner, tempDirectory: temp.Path, maxJobsPerConnection: 5);
+        var svc = new PrintJobService(publisher, runner, tempDirectory: temp.Path, maxJobsPerConnection: 5, maxQueuedJobs: 100);
 
         var jobId = await svc.SubmitAsync("HP", MinimalPdfBytes(), new PrintOptions(),
             conn, CancellationToken.None);

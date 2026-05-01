@@ -19,16 +19,23 @@ public sealed class PrintJobService : IDisposable, IPrintJobSubmitter
     private readonly int _maxJobsPerConnection;
     private readonly ConcurrentDictionary<Guid, int> _activeJobsByConnection = new();
     private readonly ConcurrentDictionary<Guid, JobState> _jobs = new();
-    private readonly Channel<PrintJob> _queue = Channel.CreateUnbounded<PrintJob>();
+    private readonly Channel<PrintJob> _queue;
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _workerTask;
 
-    public PrintJobService(JobEventPublisher publisher, ISumatraRunner runner, string tempDirectory, int maxJobsPerConnection)
+    public PrintJobService(JobEventPublisher publisher, ISumatraRunner runner, string tempDirectory,
+        int maxJobsPerConnection, int maxQueuedJobs)
     {
         _publisher = publisher;
         _runner = runner;
         _tempDirectory = tempDirectory;
         _maxJobsPerConnection = maxJobsPerConnection;
+        _queue = Channel.CreateBounded<PrintJob>(new BoundedChannelOptions(Math.Max(1, maxQueuedJobs))
+        {
+            FullMode = BoundedChannelFullMode.Wait,
+            SingleReader = true,
+            SingleWriter = false,
+        });
         Directory.CreateDirectory(_tempDirectory);
         _workerTask = Task.Run(() => WorkerLoopAsync(_cts.Token));
     }

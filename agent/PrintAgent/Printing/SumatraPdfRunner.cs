@@ -10,8 +10,13 @@ public interface ISumatraRunner
 public sealed class SumatraPdfRunner : ISumatraRunner
 {
     private readonly string _binaryPath;
+    private readonly TimeSpan _timeout;
 
-    public SumatraPdfRunner(string binaryPath) => _binaryPath = binaryPath;
+    public SumatraPdfRunner(string binaryPath, int maxRunSeconds = 60)
+    {
+        _binaryPath = binaryPath;
+        _timeout = TimeSpan.FromSeconds(Math.Max(1, maxRunSeconds));
+    }
 
     public static List<string> BuildArguments(string printerName, string pdfPath, PrintOptions options)
     {
@@ -56,12 +61,33 @@ public sealed class SumatraPdfRunner : ISumatraRunner
         };
         foreach (var a in BuildArguments(printerName, pdfPath, options)) psi.ArgumentList.Add(a);
 
+        return await RunWithTimeoutAsync(psi, _timeout, ct);
+    }
+
+    public static async Task<RunResult> RunWithTimeoutAsync(ProcessStartInfo psi, TimeSpan timeout, CancellationToken ct)
+    {
         using var process = Process.Start(psi)
-            ?? throw new InvalidOperationException("Failed to start SumatraPDF process.");
+            ?? throw new InvalidOperationException("Failed to start child process.");
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(timeout);
 
-        var stdErr = await process.StandardError.ReadToEndAsync(ct);
-        await process.WaitForExitAsync(ct);
+        var stdErrTask = process.StandardError.ReadToEndAsync();
 
+        try
+        {
+            await process.WaitForExitAsync(cts.Token);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            try { process.Kill(entireProcessTree: true); } catch { /* best effort */ }
+            try { await process.WaitForExitAsync(CancellationToken.None); } catch { }
+            string partial;
+            try { partial = await stdErrTask.WaitAsync(TimeSpan.FromSeconds(1)); }
+            catch { partial = ""; }
+            return new RunResult(-1, $"timed out after {timeout.TotalSeconds:0}s. {partial}".Trim());
+        }
+
+        var stdErr = await stdErrTask;
         return new RunResult(process.ExitCode, stdErr);
     }
 
