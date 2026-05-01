@@ -53,7 +53,8 @@ public sealed class RpcRouter
         }
         catch (Exception ex)
         {
-            return Serialize(ErrorResponse(request.Id, JsonRpcErrorCodes.InvalidRequest, $"InternalError: {ex.Message}"));
+            Serilog.Log.Logger.Error(ex, "Unhandled RPC error in method {Method}", request.Method);
+            return Serialize(ErrorResponse(request.Id, JsonRpcErrorCodes.InvalidRequest, "Internal error"));
         }
     }
 

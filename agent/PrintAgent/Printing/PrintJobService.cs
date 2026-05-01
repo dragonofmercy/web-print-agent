@@ -111,9 +111,7 @@ public sealed class PrintJobService : IDisposable, IPrintJobSubmitter
             }
             else
             {
-                var msg = string.IsNullOrWhiteSpace(result.StandardError)
-                    ? $"SumatraPDF exited with code {result.ExitCode}"
-                    : result.StandardError.Trim();
+                var msg = SanitizeError(result.StandardError) ?? $"SumatraPDF exited with code {result.ExitCode}";
                 _jobs[job.JobId] = _jobs[job.JobId] with { Status = JobStatus.Failed, Error = msg };
                 await _publisher.PublishAsync(job.SubmittingConnectionId,
                     new JobEvent(job.JobId, JobStatus.Failed, msg), ct);
@@ -121,15 +119,25 @@ public sealed class PrintJobService : IDisposable, IPrintJobSubmitter
         }
         catch (Exception ex)
         {
-            _jobs[job.JobId] = _jobs[job.JobId] with { Status = JobStatus.Failed, Error = ex.Message };
+            var msg = SanitizeError(ex.Message) ?? "Print job failed";
+            _jobs[job.JobId] = _jobs[job.JobId] with { Status = JobStatus.Failed, Error = msg };
             await _publisher.PublishAsync(job.SubmittingConnectionId,
-                new JobEvent(job.JobId, JobStatus.Failed, ex.Message), ct);
+                new JobEvent(job.JobId, JobStatus.Failed, msg), ct);
         }
         finally
         {
             try { File.Delete(job.PdfPath); } catch { /* ignore */ }
             _activeJobsByConnection.AddOrUpdate(job.SubmittingConnectionId, 0, (_, n) => Math.Max(0, n - 1));
         }
+    }
+
+    public static string? SanitizeError(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return null;
+        var chars = input.Where(c => !char.IsControl(c) || c == ' ');
+        var clean = new string(chars.ToArray()).Trim();
+        if (clean.Length > 256) clean = clean.Substring(0, 256);
+        return string.IsNullOrEmpty(clean) ? null : clean;
     }
 
     public void Dispose()

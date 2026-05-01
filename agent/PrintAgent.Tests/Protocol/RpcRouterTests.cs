@@ -80,4 +80,23 @@ public class RpcRouterTests
 
         response.Should().Contain("\"code\":-32602");
     }
+
+    [Fact]
+    public async Task Dispatch_HandlerThrowsGenericException_ReturnsGenericInternalErrorWithoutMessageContents()
+    {
+        var handler = Substitute.For<IRpcHandler>();
+        handler.Method.Returns("foo");
+        handler.RequiresPairedConnection.Returns(false);
+        handler.HandleAsync(Arg.Any<JsonElement?>(), Arg.Any<ConnectionContext>(), Arg.Any<CancellationToken>())
+            .Returns<object?>(_ => throw new InvalidOperationException("C:\\Users\\dzeller\\secret\\path.dll"));
+        var router = new RpcRouter(new[] { handler });
+
+        var response = await router.DispatchAsync(
+            """{"jsonrpc":"2.0","id":1,"method":"foo"}""",
+            UnpairedConn(), CancellationToken.None);
+
+        response.Should().NotContain("C:\\\\Users");
+        response.Should().NotContain("secret");
+        response.Should().Contain("Internal error");
+    }
 }

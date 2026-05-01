@@ -4,12 +4,42 @@ using PrintAgent.Localization;
 
 namespace PrintAgent.Tray;
 
-internal sealed class PairingPromptForm : Form
+public sealed class PairingPromptForm : Form
 {
     public bool? Decision { get; private set; }
 
+    public static string FormatOriginForDisplay(string origin)
+    {
+        // Strip C0/C1/format/bidi-override codepoints first so they can never reach the label.
+        var stripped = new string((origin ?? string.Empty).Where(c =>
+        {
+            var cat = char.GetUnicodeCategory(c);
+            return cat != System.Globalization.UnicodeCategory.Control
+                && cat != System.Globalization.UnicodeCategory.Format
+                && cat != System.Globalization.UnicodeCategory.Surrogate;
+        }).ToArray());
+
+        if (Uri.TryCreate(stripped, UriKind.Absolute, out var uri))
+        {
+            try
+            {
+                var puny = new System.Globalization.IdnMapping().GetAscii(uri.Host);
+                var defaultPort = uri.Scheme == Uri.UriSchemeHttps ? 443 : 80;
+                return uri.Port == defaultPort
+                    ? $"{uri.Scheme}://{puny}"
+                    : $"{uri.Scheme}://{puny}:{uri.Port}";
+            }
+            catch (ArgumentException)
+            {
+                /* fall through */
+            }
+        }
+        return stripped;
+    }
+
     public PairingPromptForm(string origin)
     {
+        var displayOrigin = FormatOriginForDisplay(origin);
         Text = Strings.PairingTitle;
         Icon = Icons.LoadFull();
         FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -24,7 +54,7 @@ internal sealed class PairingPromptForm : Form
             AutoSize = false,
             Location = new Point(16, 16),
             Size = new Size(388, 70),
-            Text = Strings.PairingMessage(origin)
+            Text = Strings.PairingMessage(displayOrigin)
         };
 
         var allow = new Button
