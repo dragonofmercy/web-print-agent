@@ -31,7 +31,7 @@ internal static class Program
             })
             .Run();
 
-        using var mutex = new Mutex(initiallyOwned: true, "Global\\PrintAgent.SingleInstance", out var isOwner);
+        using var mutex = new Mutex(initiallyOwned: true, "Local\\PrintAgent.SingleInstance", out var isOwner);
         if (!isOwner) return;
 
         ApplicationConfiguration.Initialize();
@@ -187,20 +187,12 @@ internal static class Program
 
     private static void ExtractEmbeddedSumatraPdf(string targetPath)
     {
-        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SumatraPDF.exe");
-        if (stream is null)
+        if (!SumatraExtraction.TryExtract(targetPath, out var warning))
         {
-            Log.Logger.Warning("SumatraPDF.exe not embedded in this build; PDF printing will fail until the binary is placed at {Path}.", targetPath);
+            if (warning is not null) Log.Logger.Warning(warning);
             return;
         }
-
-        if (File.Exists(targetPath) && new FileInfo(targetPath).Length == stream.Length)
-            return;
-
-        Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
-        using var output = File.Create(targetPath);
-        stream.CopyTo(output);
-        Log.Logger.Information("Extracted embedded SumatraPDF.exe to {Path} ({Bytes} bytes).", targetPath, stream.Length);
+        Log.Logger.Information("SumatraPDF.exe verified at {Path}.", targetPath);
     }
 
     private static void CreateStartupShortcut(string? targetExe)
