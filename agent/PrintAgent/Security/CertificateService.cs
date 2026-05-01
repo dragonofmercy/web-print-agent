@@ -33,7 +33,7 @@ public static class CertificateService
 
         var cert = request.CreateSelfSigned(
             DateTimeOffset.UtcNow.AddDays(-1),
-            DateTimeOffset.UtcNow.AddYears(10));
+            DateTimeOffset.UtcNow.AddDays(395)); // ~13 months
 
         // Re-import so the private key is exportable on disk
         return new X509Certificate2(
@@ -49,9 +49,11 @@ public static class CertificateService
             var password = ReadPassword(passwordFilePath);
             try
             {
-                return new X509Certificate2(
+                var existing = new X509Certificate2(
                     pfxPath, password,
                     X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+                if (existing.NotAfter > DateTime.UtcNow.AddDays(30))
+                    return existing;
             }
             catch (CryptographicException) { /* fall through and regenerate */ }
         }
@@ -84,24 +86,20 @@ public static class CertificateService
     }
 
     /// <summary>
-    /// Removes any CN=localhost certificates installed by PrintAgent from the CurrentUser Trusted Root store.
-    /// Only removes certs with a validity period longer than 5 years to avoid touching other localhost certs.
+    /// Removes the cert with the given thumbprint from the CurrentUser Trusted Root store.
     /// </summary>
-    public static void TryUninstallFromTrustedRoot()
+    public static void TryUninstallFromTrustedRoot(string thumbprint)
     {
+        if (string.IsNullOrWhiteSpace(thumbprint)) return;
         try
         {
             using var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
             store.Open(OpenFlags.ReadWrite);
-            var toRemove = store.Certificates
-                .Find(X509FindType.FindBySubjectDistinguishedName, "CN=localhost", false)
-                .Where(c => (c.NotAfter - c.NotBefore).TotalDays > 365 * 5)
-                .ToList();
-            foreach (var cert in toRemove)
+            foreach (var cert in store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false))
                 store.Remove(cert);
             store.Close();
         }
-        catch { /* best effort -- silent failure acceptable */ }
+        catch { /* best effort */ }
     }
 
     private static void WritePassword(string path, string password)

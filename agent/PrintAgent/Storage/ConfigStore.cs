@@ -102,6 +102,24 @@ public sealed class ConfigStore
         }
     }
 
+    public void SetCertThumbprint(string thumbprint)
+    {
+        lock (_lock)
+        {
+            var model = Load();
+            model.CertThumbprint = thumbprint;
+            Save(model);
+        }
+    }
+
+    public string? GetCertThumbprint()
+    {
+        lock (_lock)
+        {
+            return Load().CertThumbprint;
+        }
+    }
+
     private void Save(ConfigModel model)
     {
         var dir = Path.GetDirectoryName(_path);

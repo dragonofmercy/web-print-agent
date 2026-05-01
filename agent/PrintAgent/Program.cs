@@ -27,7 +27,7 @@ internal static class Program
             {
                 KillRunningInstance();
                 RemoveStartupShortcut();
-                CertificateService.TryUninstallFromTrustedRoot();
+                UninstallCertificateAndCleanFiles();
             })
             .Run();
 
@@ -55,6 +55,7 @@ internal static class Program
             ExtractEmbeddedSumatraPdf(paths.SumatraPdfPath);
 
             var configStore = new ConfigStore(paths.ConfigFile);
+            configStore.SetCertThumbprint(cert.Thumbprint);
             var origins = new OriginAuthorizationService(configStore, options.AllowInsecureOrigins);
 
             int? boundPortRef = null;
@@ -228,6 +229,25 @@ internal static class Program
                     process.WaitForExit(3000);
                 }
             }
+        }
+        catch { /* best effort */ }
+    }
+
+    private static void UninstallCertificateAndCleanFiles()
+    {
+        try
+        {
+            var paths = new Paths();
+            if (File.Exists(paths.ConfigFile))
+            {
+                var thumbprint = new ConfigStore(paths.ConfigFile).GetCertThumbprint();
+                if (!string.IsNullOrEmpty(thumbprint))
+                    CertificateService.TryUninstallFromTrustedRoot(thumbprint);
+            }
+
+            // Best-effort: delete PFX and DPAPI password file so re-install starts fresh.
+            try { if (File.Exists(paths.PfxFile)) File.Delete(paths.PfxFile); } catch { }
+            try { if (File.Exists(paths.PfxPasswordFile)) File.Delete(paths.PfxPasswordFile); } catch { }
         }
         catch { /* best effort */ }
     }

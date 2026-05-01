@@ -21,14 +21,6 @@ public class CertificateServiceTests
     }
 
     [Fact]
-    public void GenerateSelfSigned_ValidityIsAtLeast9Years()
-    {
-        var cert = CertificateService.GenerateSelfSigned();
-
-        (cert.NotAfter - cert.NotBefore).TotalDays.Should().BeGreaterThan(9 * 365);
-    }
-
-    [Fact]
     public void EnsureCertificate_FreshState_GeneratesPfxAndPasswordFiles()
     {
         using var temp = new TempDirectory();
