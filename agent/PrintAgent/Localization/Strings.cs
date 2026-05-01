@@ -28,6 +28,9 @@ public static class Strings
     public static string TrayStatusStopped => Format("Tray_StatusStopped", AppName);
     public static string TrayOpenLogs => Get("Tray_OpenLogs");
     public static string TrayQuit => Get("Tray_Quit");
+    public static string TrayAbout => Get("Tray_About");
+    public static string AboutTitle => Format("About_Title", AppName);
+    public static string AboutVersion(string version) => Format("About_Version", version);
 
     public static string BootstrapFailedToStart(string error) => Format("Bootstrap_FailedToStart", AppName, error);
 

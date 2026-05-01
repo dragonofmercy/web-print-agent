@@ -42,6 +42,15 @@ is requesting access to your local printers.</value>
   <data name="Tray_Quit" xml:space="preserve">
     <value>Quit</value>
   </data>
+  <data name="Tray_About" xml:space="preserve">
+    <value>About...</value>
+  </data>
+  <data name="About_Title" xml:space="preserve">
+    <value>About {0}</value>
+  </data>
+  <data name="About_Version" xml:space="preserve">
+    <value>Version {0}</value>
+  </data>
 
   <data name="Bootstrap_FailedToStart" xml:space="preserve">
     <value>{0} failed to start:

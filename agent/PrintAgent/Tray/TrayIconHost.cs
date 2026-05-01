@@ -52,12 +52,20 @@ public sealed class TrayIconHost : IDisposable
             catch { /* ignore */ }
         };
 
+        var aboutItem = new ToolStripMenuItem(Strings.TrayAbout);
+        aboutItem.Click += (_, _) =>
+        {
+            using var about = new AboutForm();
+            about.ShowDialog();
+        };
+
         var quitItem = new ToolStripMenuItem(Strings.TrayQuit);
         quitItem.Click += (_, _) => _onQuit();
 
         _menu.Items.Add(statusItem);
         _menu.Items.Add(originsItem);
         _menu.Items.Add(logsItem);
+        _menu.Items.Add(aboutItem);
         _menu.Items.Add(new ToolStripSeparator());
         _menu.Items.Add(quitItem);
 

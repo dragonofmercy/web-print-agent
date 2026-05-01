@@ -1,5 +1,5 @@
-using System.Reflection;
 using System.Text.Json;
+using PrintAgent;
 using PrintAgent.Security;
 
 namespace PrintAgent.Protocol.Handlers;
@@ -26,7 +26,7 @@ public sealed class AgentHelloHandler : IRpcHandler
 
         return new
         {
-            agentVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0",
+            agentVersion = AppInfo.Version,
             capabilities = new[] { "getLocalPrinters", "print", "getJobStatus" },
             jobEventsSupported = true
         };

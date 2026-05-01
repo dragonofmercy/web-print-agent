@@ -44,7 +44,7 @@ internal static class Program
 
         var logger = LoggerSetup.Create(paths.LogsDirectory, options.LogLevel);
         Log.Logger = logger;
-        logger.Information("PrintAgent {Version} starting", Assembly.GetExecutingAssembly().GetName().Version);
+        logger.Information("{AppName} {Version} starting", Strings.AppName, AppInfo.Version);
 
         try
         {

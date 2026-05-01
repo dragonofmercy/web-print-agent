@@ -42,6 +42,15 @@ veut accéder à vos imprimantes locales.</value>
   <data name="Tray_Quit" xml:space="preserve">
     <value>Quitter</value>
   </data>
+  <data name="Tray_About" xml:space="preserve">
+    <value>A propos...</value>
+  </data>
+  <data name="About_Title" xml:space="preserve">
+    <value>A propos de {0}</value>
+  </data>
+  <data name="About_Version" xml:space="preserve">
+    <value>Version {0}</value>
+  </data>
 
   <data name="Bootstrap_FailedToStart" xml:space="preserve">
     <value>Échec du démarrage de {0} :
