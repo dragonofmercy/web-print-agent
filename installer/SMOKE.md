@@ -15,7 +15,7 @@ Run after each release build before tagging.
 - [ ] Run `PrintAgentSetup.exe` on a clean Windows machine (no UAC elevation required -- installs per-user under `%LOCALAPPDATA%\PrintAgent`)
 - [ ] First launch after install: UAC prompt for trusted root cert appears -> Accept
 - [ ] PrintAgent icon appears in the tray
-- [ ] `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\PrintAgent.lnk` exists (created by the OnFirstRun Velopack hook)
+- [ ] `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\PrintAgent.lnk` does NOT exist (auto-start is disabled)
 - [ ] `%APPDATA%\PrintAgent\logs\printagent-YYYY-MM-DD.log` exists
 - [ ] `%APPDATA%\PrintAgent\printagent.pfx` exists
 - [ ] Open `https://app.example.com` (or local test page) using the standalone client
@@ -35,14 +35,14 @@ Run after each release build before tagging.
 
 ## Restart
 
-- [ ] Reboot Windows -> PrintAgent starts automatically (Startup shortcut placed by OnFirstRun hook)
-- [ ] Bound port preserved (`config.json.lastBoundPort`)
+- [ ] Reboot Windows -> PrintAgent does NOT start automatically (must be launched manually)
+- [ ] After manual launch, bound port preserved (`config.json.lastBoundPort`)
 
 ## Uninstall
 
 - [ ] Apps & features -> Uninstall PrintAgent (or run `PrintAgentSetup.exe --uninstall`)
 - [ ] Velopack OnBeforeUninstallFastCallback fires: running PrintAgent process killed
-- [ ] `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\PrintAgent.lnk` removed
+- [ ] `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\PrintAgent.lnk` removed (legacy, in case an older version had created it)
 - [ ] Trusted root cert for CN=localhost removed from CurrentUser store
 - [ ] `%LOCALAPPDATA%\PrintAgent\` removed by Velopack
 - [ ] `%APPDATA%\PrintAgent\` removed (user data -- may be left intentionally by Velopack; verify behavior)

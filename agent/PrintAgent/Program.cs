@@ -22,7 +22,6 @@ internal static class Program
     static void Main()
     {
         VelopackApp.Build()
-            .OnFirstRun(_ => CreateStartupShortcut(Environment.ProcessPath ?? AppContext.BaseDirectory))
             .OnBeforeUninstallFastCallback(_ =>
             {
                 KillRunningInstance();
@@ -33,6 +32,9 @@ internal static class Program
 
         using var mutex = new Mutex(initiallyOwned: true, "Local\\PrintAgent.SingleInstance", out var isOwner);
         if (!isOwner) return;
+
+        // Remove the auto-start shortcut left behind by older versions that installed it on first run.
+        RemoveStartupShortcut();
 
         ApplicationConfiguration.Initialize();
 
@@ -193,26 +195,6 @@ internal static class Program
             return;
         }
         Log.Logger.Information("SumatraPDF.exe verified at {Path}.", targetPath);
-    }
-
-    private static void CreateStartupShortcut(string? targetExe)
-    {
-        if (string.IsNullOrEmpty(targetExe)) return;
-        try
-        {
-            var startupFolder = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
-            var shortcutPath = Path.Combine(startupFolder, "PrintAgent.lnk");
-            if (File.Exists(shortcutPath)) return;
-            var shellType = Type.GetTypeFromProgID("WScript.Shell");
-            if (shellType is null) return;
-            dynamic shell = Activator.CreateInstance(shellType)!;
-            var shortcut = shell.CreateShortcut(shortcutPath);
-            shortcut.TargetPath = targetExe;
-            shortcut.WorkingDirectory = Path.GetDirectoryName(targetExe);
-            shortcut.Description = Strings.AppName;
-            shortcut.Save();
-        }
-        catch { /* best effort */ }
     }
 
     private static void RemoveStartupShortcut()
