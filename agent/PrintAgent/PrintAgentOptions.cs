@@ -20,4 +20,16 @@ public sealed class PrintAgentOptions
 
     /// <summary>UI language. "auto" (default) follows OS settings. Otherwise an IETF tag like "en", "fr", "fr-FR".</summary>
     public string Language { get; init; } = "auto";
+
+    /// <summary>GitHub repository URL the updater polls for new releases.</summary>
+    public string UpdateRepoUrl { get; init; } = "https://github.com/dragonofmercy/web-print-agent";
+
+    /// <summary>Hours between periodic update checks.</summary>
+    public int UpdateCheckIntervalHours { get; init; } = 6;
+
+    /// <summary>When true, prerelease GitHub releases are eligible for auto-update.</summary>
+    public bool UpdateAllowPrerelease { get; init; } = false;
+
+    /// <summary>Delay before the first update check after startup, so boot is not slowed.</summary>
+    public int UpdateInitialDelaySeconds { get; init; } = 30;
 }

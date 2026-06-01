@@ -170,6 +170,10 @@ internal static class Program
             AllowInsecureOrigins = section.TryGetProperty("AllowInsecureOrigins", out var aio) && aio.GetBoolean(),
             LogLevel = section.TryGetProperty("LogLevel", out var ll) ? ll.GetString() ?? "Information" : "Information",
             Language = section.TryGetProperty("Language", out var lang) ? lang.GetString() ?? "auto" : "auto",
+            UpdateRepoUrl = section.TryGetProperty("UpdateRepoUrl", out var uru) ? uru.GetString() ?? "https://github.com/dragonofmercy/web-print-agent" : "https://github.com/dragonofmercy/web-print-agent",
+            UpdateCheckIntervalHours = section.TryGetProperty("UpdateCheckIntervalHours", out var uci) ? uci.GetInt32() : 6,
+            UpdateAllowPrerelease = section.TryGetProperty("UpdateAllowPrerelease", out var uap) && uap.GetBoolean(),
+            UpdateInitialDelaySeconds = section.TryGetProperty("UpdateInitialDelaySeconds", out var uid) ? uid.GetInt32() : 30,
         };
     }
 
