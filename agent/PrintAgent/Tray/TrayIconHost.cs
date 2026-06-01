@@ -112,10 +112,18 @@ public sealed class TrayIconHost : IDisposable, IUpdateUi
     }
 
     public void NotifyUpToDate()
-        => RunOnUi(() => _icon.ShowBalloonTip(5000, Strings.AppName, Strings.UpdateUpToDate, ToolTipIcon.Info));
+        => RunOnUi(() =>
+        {
+            _icon.BalloonTipClicked -= OnUpdateBalloonClicked;
+            _icon.ShowBalloonTip(5000, Strings.AppName, Strings.UpdateUpToDate, ToolTipIcon.Info);
+        });
 
     public void NotifyBusyDeferred()
-        => RunOnUi(() => _icon.ShowBalloonTip(5000, Strings.AppName, Strings.UpdateBusyDeferred, ToolTipIcon.Info));
+        => RunOnUi(() =>
+        {
+            _icon.BalloonTipClicked -= OnUpdateBalloonClicked;
+            _icon.ShowBalloonTip(5000, Strings.AppName, Strings.UpdateBusyDeferred, ToolTipIcon.Info);
+        });
 
     private void OnUpdateBalloonClicked(object? sender, EventArgs e)
     {
@@ -125,7 +133,10 @@ public sealed class TrayIconHost : IDisposable, IUpdateUi
 
     private void RunOnUi(Action action)
     {
-        if (UiAnchor.IsHandleCreated && UiAnchor.InvokeRequired)
+        // If the handle is gone (not yet created, or already disposed), skip - there is no
+        // UI to update and running ShowBalloonTip off the UI thread is undefined behavior.
+        if (!UiAnchor.IsHandleCreated) return;
+        if (UiAnchor.InvokeRequired)
             UiAnchor.BeginInvoke(action);
         else
             action();
@@ -135,6 +146,7 @@ public sealed class TrayIconHost : IDisposable, IUpdateUi
     {
         _originsForm?.Close();
         _originsForm?.Dispose();
+        _icon.BalloonTipClicked -= OnUpdateBalloonClicked;
         _icon.Visible = false;
         _icon.Dispose();
         _menu.Dispose();
