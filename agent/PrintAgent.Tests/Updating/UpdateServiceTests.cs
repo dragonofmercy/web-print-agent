@@ -99,6 +99,8 @@ public class UpdateServiceTests
         await act.Should().NotThrowAsync();
         ui.DidNotReceive().NotifyUpToDate();
         ui.DidNotReceive().NotifyUpdateReady(Arg.Any<string>());
+        client.DownloadCalls.Should().Be(0);
+        client.Applied.Should().BeEmpty();
     }
 
     [Fact]

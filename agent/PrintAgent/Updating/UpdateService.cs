@@ -148,6 +148,11 @@ public sealed class UpdateService : IDisposable
     public void Dispose()
     {
         _cts?.Cancel();
+        // Let any in-flight check observe cancellation and release the semaphore
+        // before we dispose it, otherwise its finally-block Release() would throw
+        // ObjectDisposedException on a background task during shutdown.
+        try { _loopTask?.Wait(TimeSpan.FromSeconds(2)); }
+        catch (AggregateException) { /* cancellation/teardown */ }
         _cts?.Dispose();
         _checkLock.Dispose();
     }
