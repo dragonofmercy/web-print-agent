@@ -3,10 +3,11 @@ using System.Drawing;
 using System.Windows.Forms;
 using PrintAgent.Localization;
 using PrintAgent.Storage;
+using PrintAgent.Updating;
 
 namespace PrintAgent.Tray;
 
-public sealed class TrayIconHost : IDisposable
+public sealed class TrayIconHost : IDisposable, IUpdateUi
 {
     private readonly NotifyIcon _icon = new();
     private readonly ContextMenuStrip _menu = new();
@@ -15,6 +16,8 @@ public sealed class TrayIconHost : IDisposable
     private readonly Func<int?> _getBoundPort;
     private readonly Action _onQuit;
     private AuthorizedOriginsForm? _originsForm;
+    private Func<Task>? _onCheckForUpdates;
+    private Action? _onRestartForUpdate;
 
     public Control UiAnchor { get; } = new Control();
 
@@ -25,6 +28,13 @@ public sealed class TrayIconHost : IDisposable
         _getBoundPort = getBoundPort;
         _onQuit = onQuit;
         _ = UiAnchor.Handle; // force handle creation on UI thread
+    }
+
+    /// <summary>Links the tray to the update orchestrator. Called once during bootstrap after both exist.</summary>
+    public void WireUpdates(Func<Task> onCheckForUpdates, Action onRestartForUpdate)
+    {
+        _onCheckForUpdates = onCheckForUpdates;
+        _onRestartForUpdate = onRestartForUpdate;
     }
 
     public void Show()
@@ -52,6 +62,12 @@ public sealed class TrayIconHost : IDisposable
             catch { /* ignore */ }
         };
 
+        var updatesItem = new ToolStripMenuItem(Strings.TrayCheckForUpdates);
+        updatesItem.Click += (_, _) =>
+        {
+            if (_onCheckForUpdates is { } check) _ = check();
+        };
+
         var aboutItem = new ToolStripMenuItem(Strings.TrayAbout);
         aboutItem.Click += (_, _) =>
         {
@@ -65,6 +81,7 @@ public sealed class TrayIconHost : IDisposable
         _menu.Items.Add(statusItem);
         _menu.Items.Add(originsItem);
         _menu.Items.Add(logsItem);
+        _menu.Items.Add(updatesItem);
         _menu.Items.Add(aboutItem);
         _menu.Items.Add(new ToolStripSeparator());
         _menu.Items.Add(quitItem);
@@ -82,6 +99,36 @@ public sealed class TrayIconHost : IDisposable
         _originsForm = new AuthorizedOriginsForm(_configStore);
         _originsForm.FormClosed += (_, _) => _originsForm = null;
         _originsForm.Show();
+    }
+
+    public void NotifyUpdateReady(string version)
+    {
+        RunOnUi(() =>
+        {
+            _icon.BalloonTipClicked -= OnUpdateBalloonClicked;
+            _icon.BalloonTipClicked += OnUpdateBalloonClicked;
+            _icon.ShowBalloonTip(10000, Strings.AppName, Strings.UpdateReady(version), ToolTipIcon.Info);
+        });
+    }
+
+    public void NotifyUpToDate()
+        => RunOnUi(() => _icon.ShowBalloonTip(5000, Strings.AppName, Strings.UpdateUpToDate, ToolTipIcon.Info));
+
+    public void NotifyBusyDeferred()
+        => RunOnUi(() => _icon.ShowBalloonTip(5000, Strings.AppName, Strings.UpdateBusyDeferred, ToolTipIcon.Info));
+
+    private void OnUpdateBalloonClicked(object? sender, EventArgs e)
+    {
+        _icon.BalloonTipClicked -= OnUpdateBalloonClicked;
+        _onRestartForUpdate?.Invoke();
+    }
+
+    private void RunOnUi(Action action)
+    {
+        if (UiAnchor.IsHandleCreated && UiAnchor.InvokeRequired)
+            UiAnchor.BeginInvoke(action);
+        else
+            action();
     }
 
     public void Dispose()
