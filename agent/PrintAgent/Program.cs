@@ -11,6 +11,7 @@ using PrintAgent.Protocol.Handlers;
 using PrintAgent.Security;
 using PrintAgent.Storage;
 using PrintAgent.Tray;
+using PrintAgent.Updating;
 using Serilog;
 using Velopack;
 
@@ -104,9 +105,26 @@ internal static class Program
             logger.Information("PrintAgent listening on wss://127.0.0.1:{Port}", host.BoundPort);
             configStore.SetLastBoundPort(host.BoundPort!.Value);
 
+            var config = configStore.Load();
+            var updateClient = new VelopackUpdateClient(options.UpdateRepoUrl, options.UpdateAllowPrerelease);
+            var updateService = new UpdateService(
+                updateClient, trayHost,
+                hasActiveJobs: () => jobs.HasActiveJobs,
+                enabled: config.AutoUpdate,
+                initialDelay: TimeSpan.FromSeconds(options.UpdateInitialDelaySeconds),
+                interval: TimeSpan.FromHours(options.UpdateCheckIntervalHours),
+                logger: logger);
+            trayHost.WireUpdates(
+                onCheckForUpdates: () => updateService.CheckNowAsync(manual: true),
+                onRestartForUpdate: updateService.OnUserWantsRestart);
+            _ = updateService.StartAsync(CancellationToken.None);
+
             Application.Run();
 
             logger.Information("PrintAgent shutting down...");
+
+            // Stop the background update loop before the tray UI it talks to goes away.
+            updateService.Dispose();
 
             // Hide the tray icon first so the user gets immediate visual feedback.
             trayHost.Dispose();
