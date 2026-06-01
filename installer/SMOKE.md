@@ -47,6 +47,14 @@ Run after each release build before tagging.
 - [ ] `%LOCALAPPDATA%\PrintAgent\` removed by Velopack
 - [ ] `%APPDATA%\PrintAgent\` removed (user data -- may be left intentionally by Velopack; verify behavior)
 
-## Auto-update (V1 note)
+## Auto-update (manual)
 
-Auto-update is not yet active in V1 (no release feed URL configured). The RELEASES file and .nupkg are produced by build.ps1 for future use. Manual update: run the new `PrintAgentSetup.exe` over the existing installation.
+Prereq: build two installers with different versions, e.g. `./build.ps1 -Version 0.1.2` then `./build.ps1 -Version 0.1.3`, and a GitHub release feed reachable at the configured `UpdateRepoUrl`.
+
+1. Install the OLDER version (0.1.2) via its `PrintAgentSetup.exe`. Confirm the tray icon appears.
+2. Publish the NEWER version (0.1.3) `RELEASES` + `.nupkg` to the GitHub release.
+3. Tray menu -> "Check for updates...". Within a few seconds a Windows toast appears: "Update 0.1.3 is ready. Click to restart now."
+4. With NO print job running: click the toast. The agent restarts. Re-open About -> version reads 0.1.3.
+5. Busy path: install 0.1.2 again, start a long print job, publish 0.1.3, "Check for updates...", click the toast WHILE printing -> toast "A print job is running. The update will be applied later." The job finishes uninterrupted; the update applies on the next restart.
+6. Silent path: install 0.1.2, "Check for updates..." to stage 0.1.3, do NOT click, quit and relaunch the agent -> it starts on 0.1.3 (applied silently at boot).
+7. Kill switch: set `"AutoUpdate": false` in `%APPDATA%\PrintAgent\config.json`, relaunch, "Check for updates..." -> no check occurs (verify via logs: "Auto-update disabled by configuration.").
