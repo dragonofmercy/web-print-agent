@@ -149,7 +149,7 @@ public class PrintJobServiceTests
         while (!svc.HasActiveJobs && DateTimeOffset.UtcNow < deadline)
             await Task.Delay(20);
 
-        svc.HasActiveJobs.Should().BeTrue();
+        svc.HasActiveJobs.Should().BeTrue("the worker should have picked up the job within 2 s");
     }
 
     [Fact]
