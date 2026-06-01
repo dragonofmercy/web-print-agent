@@ -86,4 +86,17 @@ Elles devront repasser par la procédure d'autorisation à la prochaine connexio
     <value>Supprimer TOUTES les origines autorisées ?
 Elles devront repasser par la procédure d'autorisation à la prochaine connexion.</value>
   </data>
+
+  <data name="Tray_CheckForUpdates" xml:space="preserve">
+    <value>Rechercher les mises à jour...</value>
+  </data>
+  <data name="Update_Ready" xml:space="preserve">
+    <value>La mise à jour {0} est prête. Cliquez pour redémarrer.</value>
+  </data>
+  <data name="Update_UpToDate" xml:space="preserve">
+    <value>PrintAgent est à jour.</value>
+  </data>
+  <data name="Update_BusyDeferred" xml:space="preserve">
+    <value>Une impression est en cours. La mise à jour sera appliquée plus tard.</value>
+  </data>
 </root>

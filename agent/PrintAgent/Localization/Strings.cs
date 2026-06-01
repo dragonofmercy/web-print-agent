@@ -32,6 +32,11 @@ public static class Strings
     public static string AboutTitle => Format("About_Title", AppName);
     public static string AboutVersion(string version) => Format("About_Version", version);
 
+    public static string TrayCheckForUpdates => Get("Tray_CheckForUpdates");
+    public static string UpdateReady(string version) => Format("Update_Ready", version);
+    public static string UpdateUpToDate => Get("Update_UpToDate");
+    public static string UpdateBusyDeferred => Get("Update_BusyDeferred");
+
     public static string BootstrapFailedToStart(string error) => Format("Bootstrap_FailedToStart", AppName, error);
 
     public static string TrayAuthorizedOrigins => Get("Tray_AuthorizedOrigins");

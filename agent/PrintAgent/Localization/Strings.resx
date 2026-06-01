@@ -86,4 +86,17 @@ They will need to pair again on next connection.</value>
     <value>Remove ALL authorized origins?
 They will need to pair again on next connection.</value>
   </data>
+
+  <data name="Tray_CheckForUpdates" xml:space="preserve">
+    <value>Check for updates...</value>
+  </data>
+  <data name="Update_Ready" xml:space="preserve">
+    <value>Update {0} is ready. Click to restart now.</value>
+  </data>
+  <data name="Update_UpToDate" xml:space="preserve">
+    <value>PrintAgent is up to date.</value>
+  </data>
+  <data name="Update_BusyDeferred" xml:space="preserve">
+    <value>A print job is running. The update will be applied later.</value>
+  </data>
 </root>
