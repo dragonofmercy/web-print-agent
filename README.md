@@ -115,6 +115,10 @@ pa.on('job.statusChanged', (event) => {
 })
 ```
 
+## Code signing
+
+Release binaries are signed using free code signing provided by [SignPath.io](https://about.signpath.io/), with a certificate from the [SignPath Foundation](https://signpath.org/). See [CODE_SIGNING_POLICY.md](CODE_SIGNING_POLICY.md) for the build, signing, roles, and privacy details.
+
 ## Credits
 
 - Maintained by [DragonOfMercy](https://github.com/dragonofmercy)
