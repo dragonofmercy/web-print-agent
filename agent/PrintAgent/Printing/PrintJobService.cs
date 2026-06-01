@@ -73,6 +73,9 @@ public sealed class PrintJobService : IDisposable, IPrintJobSubmitter
         return state.Status;
     }
 
+    /// <summary>True while any job is queued or printing. Used by the updater to avoid restarting mid-print.</summary>
+    public bool HasActiveJobs => _jobs.Values.Any(s => s.Status is JobStatus.Submitted or JobStatus.Printing);
+
     public async Task WaitForJobCompletionAsync(Guid jobId, TimeSpan timeout)
     {
         var deadline = DateTimeOffset.UtcNow + timeout;

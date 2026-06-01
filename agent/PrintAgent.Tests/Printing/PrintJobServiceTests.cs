@@ -124,4 +124,44 @@ public class PrintJobServiceTests
         public Task<SumatraPdfRunner.RunResult> RunAsync(string printer, string pdf, PrintOptions opts, CancellationToken ct)
             => Task.Delay(Timeout.Infinite, ct).ContinueWith(_ => new SumatraPdfRunner.RunResult(0, ""));
     }
+
+    [Fact]
+    public void HasActiveJobs_NoJobs_ReturnsFalse()
+    {
+        using var temp = new TempDirectory();
+        var svc = new PrintJobService(new JobEventPublisher(), new FakeRunner(),
+            tempDirectory: temp.Path, maxJobsPerConnection: 5, maxQueuedJobs: 100);
+
+        svc.HasActiveJobs.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task HasActiveJobs_WhileJobRunning_ReturnsTrue()
+    {
+        using var temp = new TempDirectory();
+        var svc = new PrintJobService(new JobEventPublisher(), new HangingRunner(),
+            tempDirectory: temp.Path, maxJobsPerConnection: 5, maxQueuedJobs: 100);
+
+        await svc.SubmitAsync("HP", MinimalPdfBytes(), new PrintOptions(), Guid.NewGuid(), CancellationToken.None);
+
+        // The worker picks the job up asynchronously; poll until it is active.
+        var deadline = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(2);
+        while (!svc.HasActiveJobs && DateTimeOffset.UtcNow < deadline)
+            await Task.Delay(20);
+
+        svc.HasActiveJobs.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task HasActiveJobs_AfterCompletion_ReturnsFalse()
+    {
+        using var temp = new TempDirectory();
+        var svc = new PrintJobService(new JobEventPublisher(), new FakeRunner(),
+            tempDirectory: temp.Path, maxJobsPerConnection: 5, maxQueuedJobs: 100);
+
+        var jobId = await svc.SubmitAsync("HP", MinimalPdfBytes(), new PrintOptions(), Guid.NewGuid(), CancellationToken.None);
+        await svc.WaitForJobCompletionAsync(jobId, TimeSpan.FromSeconds(2));
+
+        svc.HasActiveJobs.Should().BeFalse();
+    }
 }
