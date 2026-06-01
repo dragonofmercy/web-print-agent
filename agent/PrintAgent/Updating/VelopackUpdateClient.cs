@@ -41,6 +41,9 @@ public sealed class VelopackUpdateClient : IUpdateClient
     /// <inheritdoc/>
     public async Task<AgentUpdate?> CheckAsync(CancellationToken ct)
     {
+        // Velopack 0.0.1298 exposes no cancellable CheckForUpdatesAsync overload, so the token
+        // can only be honored before the call. Respect an already-cancelled token here.
+        ct.ThrowIfCancellationRequested();
         _current = await _manager.CheckForUpdatesAsync();
         return _current is null ? null : new AgentUpdate(_current.TargetFullRelease.Version.ToString());
     }
