@@ -161,4 +161,22 @@ public class ConfigStoreTests
 
         store.ClearAllowedOrigins().Should().Be(0);
     }
+
+    [Fact]
+    public void ConfigModel_AutoUpdate_DefaultsToTrue()
+    {
+        new ConfigModel().AutoUpdate.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Load_PreservesAutoUpdateFalse_AfterRoundTrip()
+    {
+        using var temp = new TempDirectory();
+        var path = System.IO.Path.Combine(temp.Path, "config.json");
+        System.IO.File.WriteAllText(path, "{\"AutoUpdate\":false}");
+
+        var store = new ConfigStore(path);
+
+        store.Load().AutoUpdate.Should().BeFalse();
+    }
 }
