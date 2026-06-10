@@ -6,7 +6,9 @@ namespace PrintAgent.Hosting;
 /// Coalesces a burst of <see cref="Trigger"/> calls into a single callback invocation
 /// that fires once after <c>interval</c> of quiet. Each Trigger restarts the window, so
 /// rapid repeated triggers collapse to one callback. Thread-safe and disposable: after
-/// <see cref="Dispose"/>, a pending callback will not fire and further triggers are no-ops.
+/// <see cref="Dispose"/>, a pending callback that has not yet started will not fire and
+/// further triggers are no-ops (a callback already in flight when Dispose runs may still
+/// complete - the caller's callback must tolerate that).
 /// </summary>
 public sealed class Debouncer : IDisposable
 {

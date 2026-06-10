@@ -34,7 +34,7 @@ public class DebouncerTests
     }
 
     [Fact]
-    public async Task DisposeBeforeFire_SuppressesPendingCallback()
+    public async Task DisposeBeforeInterval_SuppressesPendingCallback()
     {
         var count = 0;
         var interval = TimeSpan.FromMilliseconds(100);
