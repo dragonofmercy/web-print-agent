@@ -10,7 +10,7 @@ var PrintAgent = class {
       handshakeTimeoutMs: options.handshakeTimeoutMs ?? 3e4,
       reconnectInitialDelayMs: options.reconnectInitialDelayMs ?? 1e3,
       reconnectMaxDelayMs: options.reconnectMaxDelayMs ?? 3e4,
-      clientVersion: options.clientVersion ?? "0.1.0"
+      clientVersion: options.clientVersion ?? "0.1.4"
     };
     this.reconnectDelay = this.opts.reconnectInitialDelayMs;
   }
