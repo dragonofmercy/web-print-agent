@@ -148,6 +148,38 @@ public class PairingServiceTests
     }
 
     [Fact]
+    public async Task RequestApproval_OneWaiterCancels_OtherWaiterStillGetsSharedDecision()
+    {
+        using var temp = new TempDirectory();
+        var (svc, ui, store) = Build(temp);
+        var tcs = new TaskCompletionSource<PairingDecision>(TaskCreationOptions.RunContinuationsAsynchronously);
+        ui.PromptAsync(Arg.Any<string>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                // Mimic WinFormsPairingUi: token cancellation resolves the prompt as TimedOut.
+                callInfo.Arg<CancellationToken>().Register(() => tcs.TrySetResult(PairingDecision.TimedOut));
+                return tcs.Task;
+            });
+
+        using var cts1 = new CancellationTokenSource();
+        using var cts2 = new CancellationTokenSource();
+        var first = svc.RequestApprovalAsync("https://app.example.com", cts1.Token);
+        var second = svc.RequestApprovalAsync("https://app.example.com", cts2.Token);
+        first.IsCompleted.Should().BeFalse();
+        second.IsCompleted.Should().BeFalse();
+
+        // Caller 1 disconnects while the prompt is still pending.
+        cts1.Cancel();
+        await first.Invoking(t => t).Should().ThrowAsync<OperationCanceledException>();
+        second.IsCompleted.Should().BeFalse();
+
+        // The shared prompt keeps running and is then approved for caller 2.
+        tcs.SetResult(PairingDecision.Approved);
+        (await second).Should().Be(PairingDecision.Approved);
+        store.IsOriginAllowed("https://app.example.com").Should().BeTrue();
+    }
+
+    [Fact]
     public async Task RequestApproval_AfterPendingPromptResolves_NextRequestPromptsAgain()
     {
         using var temp = new TempDirectory();

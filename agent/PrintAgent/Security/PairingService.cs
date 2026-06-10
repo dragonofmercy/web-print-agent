@@ -34,18 +34,21 @@ public sealed class PairingService : IPairingCoordinator
 
         // Coalesce concurrent requests for the same origin onto a single prompt:
         // only the Lazy that wins publication runs PromptAndRecordAsync, every
-        // other caller awaits the same pending decision.
+        // other caller awaits the same pending decision. The shared prompt runs
+        // detached from any caller token (its lifetime is bounded by the prompt
+        // timeout inside the UI), so one waiter disconnecting cannot resolve the
+        // decision for the others; each waiter observes its own token via WaitAsync.
         var pending = _pendingPrompts.GetOrAdd(origin,
-            key => new Lazy<Task<PairingDecision>>(() => PromptAndRecordAsync(key, ct)));
+            key => new Lazy<Task<PairingDecision>>(() => PromptAndRecordAsync(key)));
 
-        return await pending.Value;
+        return await pending.Value.WaitAsync(ct);
     }
 
-    private async Task<PairingDecision> PromptAndRecordAsync(string origin, CancellationToken ct)
+    private async Task<PairingDecision> PromptAndRecordAsync(string origin)
     {
         try
         {
-            var decision = await _ui.PromptAsync(origin, _promptTimeout, ct);
+            var decision = await _ui.PromptAsync(origin, _promptTimeout, CancellationToken.None);
 
             switch (decision)
             {
