@@ -59,28 +59,32 @@ public sealed class WebSocketEndpoint
         }
 
         using var ws = await context.WebSockets.AcceptWebSocketAsync();
+        using var sendGate = new SendGate();
 
         var normalizedOrigin = _origins.Normalize(origin);
         var connection = new ConnectionContext
         {
             Origin = normalizedOrigin,
             IsPaired = classification == OriginClassification.Allowed,
-            SendNotificationAsync = (n, ct) => SendAsync(ws, RpcRouter.SerializeNotification(n), ct)
+            SendNotificationAsync = (n, ct) => SendAsync(ws, sendGate, RpcRouter.SerializeNotification(n), ct)
         };
 
-        _activeSockets[connection.ConnectionId] = ws;
-
-        using var subscription = _publisher.Subscribe(connection.ConnectionId, (ev, ct) =>
+        try
         {
-            var notif = new JsonRpcNotification
-            {
-                Method = "job.statusChanged",
-                Params = new { jobId = ev.JobId.ToString(), status = ev.Status.ToString(), error = ev.Error }
-            };
-            return SendAsync(ws, RpcRouter.SerializeNotification(notif), ct);
-        });
+            _activeSockets[connection.ConnectionId] = ws;
 
-        try { await ReceiveLoopAsync(ws, connection, context.RequestAborted); }
+            using var subscription = _publisher.Subscribe(connection.ConnectionId, (ev, ct) =>
+            {
+                var notif = new JsonRpcNotification
+                {
+                    Method = "job.statusChanged",
+                    Params = new { jobId = ev.JobId.ToString(), status = ev.Status.ToString(), error = ev.Error }
+                };
+                return SendAsync(ws, sendGate, RpcRouter.SerializeNotification(notif), ct);
+            });
+
+            await ReceiveLoopAsync(ws, sendGate, connection, context.RequestAborted);
+        }
         catch (OperationCanceledException) { /* normal during shutdown */ }
         catch (WebSocketException) { /* normal when peer disconnects */ }
         catch (Exception ex) { _log.Warning(ex, "WS loop error for origin {Origin}", normalizedOrigin); }
@@ -108,7 +112,7 @@ public sealed class WebSocketEndpoint
         await Task.WhenAll(tasks);
     }
 
-    private async Task ReceiveLoopAsync(WebSocket ws, ConnectionContext conn, CancellationToken ct)
+    private async Task ReceiveLoopAsync(WebSocket ws, SendGate sendGate, ConnectionContext conn, CancellationToken ct)
     {
         var buffer = new byte[8192];
         while (ws.State == WebSocketState.Open)
@@ -133,13 +137,13 @@ public sealed class WebSocketEndpoint
 
             var raw = Encoding.UTF8.GetString(ms.ToArray());
             var response = await _router.DispatchAsync(raw, conn, ct);
-            await SendAsync(ws, response, ct);
+            await SendAsync(ws, sendGate, response, ct);
         }
     }
 
-    private static async Task SendAsync(WebSocket ws, string text, CancellationToken ct)
+    private static Task SendAsync(WebSocket ws, SendGate sendGate, string text, CancellationToken ct)
     {
         var bytes = Encoding.UTF8.GetBytes(text);
-        await ws.SendAsync(bytes, WebSocketMessageType.Text, endOfMessage: true, ct);
+        return sendGate.RunAsync(() => ws.SendAsync(bytes, WebSocketMessageType.Text, endOfMessage: true, ct), ct);
     }
 }
