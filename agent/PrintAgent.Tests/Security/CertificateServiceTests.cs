@@ -46,4 +46,27 @@ public class CertificateServiceTests
 
         second.Thumbprint.Should().Be(first.Thumbprint);
     }
+
+    [FactWindowsOnly]
+    public void EnsureCertificate_CorruptedPasswordFile_RegeneratesInsteadOfThrowing()
+    {
+        using var temp = new TempDirectory();
+        var pfxPath = Path.Combine(temp.Path, "p.pfx");
+        var pwdPath = Path.Combine(temp.Path, "p.pfx.password");
+
+        var first = CertificateService.EnsureCertificate(pfxPath, pwdPath);
+        var corruptedBytes = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x42 };
+        File.WriteAllBytes(pwdPath, corruptedBytes);
+
+        var regenerated = CertificateService.EnsureCertificate(pfxPath, pwdPath);
+
+        regenerated.Should().NotBeNull();
+        regenerated.Thumbprint.Should().NotBe(first.Thumbprint);
+        regenerated.NotAfter.Should().BeAfter(DateTime.UtcNow.AddDays(30));
+        File.ReadAllBytes(pwdPath).Should().NotEqual(corruptedBytes, "the stale password file must be overwritten");
+
+        // The rewritten pfx/password pair must be loadable on the next run.
+        var reloaded = CertificateService.EnsureCertificate(pfxPath, pwdPath);
+        reloaded.Thumbprint.Should().Be(regenerated.Thumbprint);
+    }
 }

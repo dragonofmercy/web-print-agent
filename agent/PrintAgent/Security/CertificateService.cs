@@ -46,16 +46,21 @@ public static class CertificateService
     {
         if (File.Exists(pfxPath) && File.Exists(passwordFilePath))
         {
-            var password = ReadPassword(passwordFilePath);
             try
             {
+                var password = ReadPassword(passwordFilePath);
                 var existing = new X509Certificate2(
                     pfxPath, password,
                     X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
                 if (existing.NotAfter > DateTime.UtcNow.AddDays(30))
                     return existing;
             }
-            catch (CryptographicException) { /* fall through and regenerate */ }
+            catch (Exception ex) when (ex is CryptographicException or FormatException or IOException)
+            {
+                // Corrupted password file, DPAPI/profile change or unreadable pfx:
+                // fall through and regenerate a fresh certificate.
+                Serilog.Log.Logger.Warning(ex, "Failed to load existing certificate from {PfxPath}; regenerating.", pfxPath);
+            }
         }
 
         var newPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
