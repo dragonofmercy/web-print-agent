@@ -56,6 +56,138 @@ public class PrintHandlerTests
         await act.Should().ThrowAsync<ArgumentException>().WithMessage("*pdfBase64*");
     }
 
+    private static (PrintHandler Handler, IPrintJobSubmitter Jobs) MakeHandler()
+    {
+        var jobs = Substitute.For<IPrintJobSubmitter>();
+        jobs.SubmitAsync(Arg.Any<string>(), Arg.Any<byte[]>(), Arg.Any<PrintOptions>(),
+                Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Guid.NewGuid());
+        return (new PrintHandler(jobs, PrinterServiceFakes.With("HP"), maxBytes: 1024), jobs);
+    }
+
+    private static JsonElement ParamsWithOptions(object? options) => JsonSerializer.SerializeToElement(new
+    {
+        printerName = "HP",
+        pdfBase64 = Convert.ToBase64String("%PDF-1.4\n%%EOF"u8.ToArray()),
+        options
+    });
+
+    private static JsonElement ParamsWithRawOptions(string optionsJson)
+    {
+        var pdf = Convert.ToBase64String("%PDF-1.4\n%%EOF"u8.ToArray());
+        return JsonDocument.Parse("{\"printerName\":\"HP\",\"pdfBase64\":\"" + pdf + "\",\"options\":" + optionsJson + "}").RootElement;
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Handle_ColorBoolean_PassesValueThrough(bool color)
+    {
+        var (handler, jobs) = MakeHandler();
+
+        await handler.HandleAsync(ParamsWithOptions(new { color }),
+            new ConnectionContext { IsPaired = true }, CancellationToken.None);
+
+        await jobs.Received(1).SubmitAsync("HP", Arg.Any<byte[]>(),
+            Arg.Is<PrintOptions>(o => o.Color == color), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ColorAbsent_DefaultsToTrue()
+    {
+        var (handler, jobs) = MakeHandler();
+
+        await handler.HandleAsync(ParamsWithOptions(new { copies = 1 }),
+            new ConnectionContext { IsPaired = true }, CancellationToken.None);
+
+        await jobs.Received(1).SubmitAsync("HP", Arg.Any<byte[]>(),
+            Arg.Is<PrintOptions>(o => o.Color == true), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("\"false\"")]
+    [InlineData("0")]
+    [InlineData("{}")]
+    [InlineData("[]")]
+    public async Task Handle_ColorWrongType_ThrowsArgumentException(string colorJson)
+    {
+        var (handler, _) = MakeHandler();
+        var paramsJson = ParamsWithRawOptions("{\"color\":" + colorJson + "}");
+
+        var act = () => handler.HandleAsync(paramsJson, new ConnectionContext { IsPaired = true }, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*color*");
+    }
+
+    [Fact]
+    public async Task Handle_CopiesAbsent_DefaultsToOne()
+    {
+        var (handler, jobs) = MakeHandler();
+
+        await handler.HandleAsync(ParamsWithOptions(new { color = true }),
+            new ConnectionContext { IsPaired = true }, CancellationToken.None);
+
+        await jobs.Received(1).SubmitAsync("HP", Arg.Any<byte[]>(),
+            Arg.Is<PrintOptions>(o => o.Copies == 1), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_CopiesNumber_PassesValueThrough()
+    {
+        var (handler, jobs) = MakeHandler();
+
+        await handler.HandleAsync(ParamsWithOptions(new { copies = 3 }),
+            new ConnectionContext { IsPaired = true }, CancellationToken.None);
+
+        await jobs.Received(1).SubmitAsync("HP", Arg.Any<byte[]>(),
+            Arg.Is<PrintOptions>(o => o.Copies == 3), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [Theory]
+    [InlineData("\"2\"")]
+    [InlineData("null")]
+    [InlineData("true")]
+    [InlineData("2.5")]
+    public async Task Handle_CopiesWrongTypeOrNonIntegral_ThrowsArgumentException(string copiesJson)
+    {
+        var (handler, _) = MakeHandler();
+        var paramsJson = ParamsWithRawOptions("{\"copies\":" + copiesJson + "}");
+
+        var act = () => handler.HandleAsync(paramsJson, new ConnectionContext { IsPaired = true }, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*copies*");
+    }
+
+    [Theory]
+    [InlineData("5")]
+    [InlineData("null")]
+    [InlineData("true")]
+    public async Task Handle_PaperSizeWrongType_ThrowsArgumentException(string paperSizeJson)
+    {
+        var (handler, _) = MakeHandler();
+        var paramsJson = ParamsWithRawOptions("{\"paperSize\":" + paperSizeJson + "}");
+
+        var act = () => handler.HandleAsync(paramsJson, new ConnectionContext { IsPaired = true }, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*paperSize*");
+    }
+
+    [Theory]
+    [InlineData("\"A4\"")]
+    [InlineData("null")]
+    [InlineData("42")]
+    [InlineData("[]")]
+    public async Task Handle_OptionsNotAnObject_ThrowsArgumentException(string optionsJson)
+    {
+        var (handler, _) = MakeHandler();
+        var paramsJson = ParamsWithRawOptions(optionsJson);
+
+        var act = () => handler.HandleAsync(paramsJson, new ConnectionContext { IsPaired = true }, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("*options*");
+    }
+
     [Fact]
     public async Task Handle_PdfTooLarge_ThrowsArgumentException()
     {

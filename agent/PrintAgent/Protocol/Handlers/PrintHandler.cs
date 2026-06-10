@@ -50,37 +50,65 @@ public sealed class PrintHandler : IRpcHandler
         if (pdfBytes.Length > _maxBytes)
             throw new ArgumentException($"PDF too large: {pdfBytes.Length} > {_maxBytes}.");
 
-        var options = new PrintOptions();
-        if (p.TryGetProperty("options", out var optsEl) && optsEl.ValueKind == JsonValueKind.Object)
-        {
-            var orientation = PrintOrientation.Default;
-            if (optsEl.TryGetProperty("orientation", out var or) && or.ValueKind == JsonValueKind.String)
-            {
-                orientation = or.GetString()?.ToLowerInvariant() switch
-                {
-                    "portrait" => PrintOrientation.Portrait,
-                    "landscape" => PrintOrientation.Landscape,
-                    _ => PrintOrientation.Default
-                };
-            }
-
-            string? paperSize = null;
-            if (optsEl.TryGetProperty("paperSize", out var ps) && ps.ValueKind == JsonValueKind.String)
-            {
-                paperSize = ps.GetString();
-                if (!IsValidPaperSize(paperSize))
-                    throw new ArgumentException($"Invalid 'paperSize' value: {paperSize}");
-            }
-
-            options = new PrintOptions(
-                Copies: optsEl.TryGetProperty("copies", out var c) && c.ValueKind == JsonValueKind.Number ? c.GetInt32() : 1,
-                PaperSize: paperSize,
-                Color: optsEl.TryGetProperty("color", out var col) && col.ValueKind == JsonValueKind.False ? false : true,
-                Orientation: orientation);
-        }
+        var options = ParseOptions(p);
 
         var jobId = await _jobs.SubmitAsync(printerName, pdfBytes, options, connection.ConnectionId, ct);
         return new { jobId = jobId.ToString() };
+    }
+
+    private static PrintOptions ParseOptions(JsonElement p)
+    {
+        if (!p.TryGetProperty("options", out var optsEl)) return new PrintOptions();
+        if (optsEl.ValueKind != JsonValueKind.Object)
+            throw new ArgumentException("Invalid 'options': expected a JSON object.");
+
+        return new PrintOptions(
+            Copies: ParseCopies(optsEl),
+            PaperSize: ParsePaperSize(optsEl),
+            Color: ParseColor(optsEl),
+            Orientation: ParseOrientation(optsEl));
+    }
+
+    private static int ParseCopies(JsonElement opts)
+    {
+        if (!opts.TryGetProperty("copies", out var el)) return 1;
+        if (el.ValueKind != JsonValueKind.Number || !el.TryGetInt32(out var copies))
+            throw new ArgumentException("Invalid 'copies': expected an integer number.");
+        return copies;
+    }
+
+    private static string? ParsePaperSize(JsonElement opts)
+    {
+        if (!opts.TryGetProperty("paperSize", out var el)) return null;
+        if (el.ValueKind != JsonValueKind.String)
+            throw new ArgumentException("Invalid 'paperSize': expected a string.");
+        var value = el.GetString();
+        if (!IsValidPaperSize(value))
+            throw new ArgumentException($"Invalid 'paperSize' value: {value}");
+        return value;
+    }
+
+    private static bool ParseColor(JsonElement opts)
+    {
+        if (!opts.TryGetProperty("color", out var el)) return true;
+        return el.ValueKind switch
+        {
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => throw new ArgumentException("Invalid 'color': expected a boolean.")
+        };
+    }
+
+    private static PrintOrientation ParseOrientation(JsonElement opts)
+    {
+        if (!opts.TryGetProperty("orientation", out var el) || el.ValueKind != JsonValueKind.String)
+            return PrintOrientation.Default;
+        return el.GetString()?.ToLowerInvariant() switch
+        {
+            "portrait" => PrintOrientation.Portrait,
+            "landscape" => PrintOrientation.Landscape,
+            _ => PrintOrientation.Default
+        };
     }
 
     private static bool IsValidPaperSize(string? value)
