@@ -126,6 +126,54 @@ public class PrintJobServiceTests
     }
 
     [Fact]
+    public async Task WaitForJobCompletion_FastJob_ReturnsPromptlyAndJobIsTerminal()
+    {
+        using var temp = new TempDirectory();
+        var svc = new PrintJobService(new JobEventPublisher(), new FakeRunner(),
+            tempDirectory: temp.Path, maxJobsPerConnection: 5, maxQueuedJobs: 100);
+
+        var jobId = await svc.SubmitAsync("HP", MinimalPdfBytes(), new PrintOptions(), Guid.NewGuid(), CancellationToken.None);
+
+        // A generous timeout: the wait must return well before it, because the TCS is signaled
+        // the instant the job becomes terminal (no fixed-interval polling latency).
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        await svc.WaitForJobCompletionAsync(jobId, TimeSpan.FromSeconds(10));
+        sw.Stop();
+
+        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(5));
+        var status = svc.GetStatus(jobId, out _);
+        status.Should().Be(JobStatus.Completed);
+    }
+
+    [Fact]
+    public async Task WaitForJobCompletion_JobNeverCompletes_ReturnsWithoutThrowingAndJobIsNonTerminal()
+    {
+        using var temp = new TempDirectory();
+        var svc = new PrintJobService(new JobEventPublisher(), new HangingRunner(),
+            tempDirectory: temp.Path, maxJobsPerConnection: 5, maxQueuedJobs: 100);
+
+        var jobId = await svc.SubmitAsync("HP", MinimalPdfBytes(), new PrintOptions(), Guid.NewGuid(), CancellationToken.None);
+
+        var act = () => svc.WaitForJobCompletionAsync(jobId, TimeSpan.FromMilliseconds(100));
+
+        await act.Should().NotThrowAsync();
+        var status = svc.GetStatus(jobId, out _);
+        status.Should().BeOneOf(JobStatus.Submitted, JobStatus.Printing);
+    }
+
+    [Fact]
+    public async Task WaitForJobCompletion_UnknownJobId_ReturnsImmediatelyWithoutThrowing()
+    {
+        using var temp = new TempDirectory();
+        var svc = new PrintJobService(new JobEventPublisher(), new FakeRunner(),
+            tempDirectory: temp.Path, maxJobsPerConnection: 5, maxQueuedJobs: 100);
+
+        var act = () => svc.WaitForJobCompletionAsync(Guid.NewGuid(), TimeSpan.FromSeconds(10));
+
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
     public void HasActiveJobs_NoJobs_ReturnsFalse()
     {
         using var temp = new TempDirectory();

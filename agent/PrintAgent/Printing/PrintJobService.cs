@@ -58,7 +58,11 @@ public sealed class PrintJobService : IDisposable, IPrintJobSubmitter
         await File.WriteAllBytesAsync(pdfPath, pdfBytes, ct);
 
         var job = new PrintJob(jobId, printerName, pdfPath, options, connectionId);
-        _jobs[jobId] = new JobState { Status = JobStatus.Submitted };
+        _jobs[jobId] = new JobState
+        {
+            Status = JobStatus.Submitted,
+            Completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously),
+        };
 
         await _publisher.PublishAsync(connectionId, new JobEvent(jobId, JobStatus.Submitted), ct);
         await _queue.Writer.WriteAsync(job, ct);
@@ -78,14 +82,8 @@ public sealed class PrintJobService : IDisposable, IPrintJobSubmitter
 
     public async Task WaitForJobCompletionAsync(Guid jobId, TimeSpan timeout)
     {
-        var deadline = DateTimeOffset.UtcNow + timeout;
-        while (DateTimeOffset.UtcNow < deadline)
-        {
-            if (_jobs.TryGetValue(jobId, out var state)
-                && (state.Status == JobStatus.Completed || state.Status == JobStatus.Failed))
-                return;
-            await Task.Delay(20);
-        }
+        if (!_jobs.TryGetValue(jobId, out var state)) return;
+        await Task.WhenAny(state.Completion.Task, Task.Delay(timeout));
     }
 
     private async Task WorkerLoopAsync(CancellationToken ct)
@@ -131,6 +129,11 @@ public sealed class PrintJobService : IDisposable, IPrintJobSubmitter
         {
             try { File.Delete(job.PdfPath); } catch { /* ignore */ }
             _activeJobsByConnection.AddOrUpdate(job.SubmittingConnectionId, 0, (_, n) => Math.Max(0, n - 1));
+            // Signal completion once the job has reached its terminal state (Completed or Failed).
+            // All three terminal branches set the JobState before this finally runs, so reading it
+            // here covers success, failure, and exception paths. TrySetResult is idempotent.
+            if (_jobs.TryGetValue(job.JobId, out var terminal))
+                terminal.Completion.TrySetResult();
         }
     }
 
@@ -155,5 +158,13 @@ public sealed class PrintJobService : IDisposable, IPrintJobSubmitter
     {
         public JobStatus Status { get; init; }
         public string? Error { get; init; }
+
+        /// <summary>
+        /// Completed exactly once when the job reaches a terminal state (Completed or Failed).
+        /// The reference survives across `with` status updates, so the same instance persists
+        /// for the job's lifetime. Created with RunContinuationsAsynchronously to avoid inline
+        /// continuation hazards on the single-reader worker thread.
+        /// </summary>
+        public required TaskCompletionSource Completion { get; init; }
     }
 }
