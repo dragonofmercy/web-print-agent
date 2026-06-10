@@ -65,15 +65,37 @@ public sealed class UpdateService : IDisposable
         try
         {
             await Task.Delay(_initialDelay, ct);
-            while (!ct.IsCancellationRequested)
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            return; // Normal shutdown before the first cycle.
+        }
+
+        while (!ct.IsCancellationRequested)
+        {
+            try
             {
                 await CheckNowAsync(manual: false);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                return; // Normal shutdown observed inside a check.
+            }
+            catch (Exception ex)
+            {
+                // A single bad cycle (e.g. UI toast throwing) must not kill auto-update
+                // for the rest of the process lifetime. Log and continue to the next cycle.
+                _logger.Warning(ex, "Periodic update check failed; continuing the loop.");
+            }
+
+            try
+            {
                 await Task.Delay(_interval, ct);
             }
-        }
-        catch (OperationCanceledException)
-        {
-            // Normal shutdown.
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                return; // Normal shutdown while idle between cycles.
+            }
         }
     }
 

@@ -43,10 +43,12 @@ public class UpdateServiceTests
     }
 
     private static UpdateService NewService(
-        FakeUpdateClient client, IUpdateUi ui, bool enabled = true, Func<bool>? hasActiveJobs = null)
+        FakeUpdateClient client, IUpdateUi ui, bool enabled = true, Func<bool>? hasActiveJobs = null,
+        Serilog.ILogger? logger = null, TimeSpan? initialDelay = null, TimeSpan? interval = null)
         => new(client, ui, hasActiveJobs ?? (() => false), enabled,
-            initialDelay: TimeSpan.FromMinutes(10), interval: TimeSpan.FromMinutes(10),
-            logger: Serilog.Core.Logger.None);
+            initialDelay: initialDelay ?? TimeSpan.FromMinutes(10),
+            interval: interval ?? TimeSpan.FromMinutes(10),
+            logger: logger ?? Serilog.Core.Logger.None);
 
     [Fact]
     public async Task Check_FindsUpdate_DownloadsAndNotifiesReady()
@@ -193,6 +195,83 @@ public class UpdateServiceTests
 
         client.Applied.Should().BeEmpty();
         ui.DidNotReceive().NotifyBusyDeferred(); // boot path is silent, no toast
+    }
+
+    [Fact]
+    public async Task RunLoop_CheckThrowsUnexpectedly_SurvivesAndKeepsChecking()
+    {
+        // NotifyUpdateReady throwing is an exception OUTSIDE CheckNowAsync's inner try blocks:
+        // it must not kill the periodic loop. We prove a SUBSEQUENT check still runs.
+        var client = new FakeUpdateClient { CheckResult = new AgentUpdate("1.0.0") };
+        var ui = Substitute.For<IUpdateUi>();
+        ui.When(u => u.NotifyUpdateReady(Arg.Any<string>())).Throw(new InvalidOperationException("toast failed"));
+        var logger = Substitute.For<Serilog.ILogger>();
+
+        using var svc = NewService(client, ui, logger: logger,
+            initialDelay: TimeSpan.FromMilliseconds(1), interval: TimeSpan.FromMilliseconds(1));
+
+        await svc.StartAsync(CancellationToken.None);
+
+        // The loop should perform multiple checks despite the first one throwing from the UI.
+        var deadline = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(5);
+        while (client.CheckCalls < 2 && DateTimeOffset.UtcNow < deadline)
+            await Task.Delay(10);
+
+        client.CheckCalls.Should().BeGreaterThanOrEqualTo(2,
+            "a single failed cycle must not terminate the periodic update loop");
+    }
+
+    [Fact]
+    public async Task RunLoop_CheckThrowsUnexpectedly_IsLoggedAtWarning()
+    {
+        var client = new FakeUpdateClient { CheckResult = new AgentUpdate("1.0.0") };
+        var ui = Substitute.For<IUpdateUi>();
+        var boom = new InvalidOperationException("toast failed");
+        ui.When(u => u.NotifyUpdateReady(Arg.Any<string>())).Throw(boom);
+        var logger = Substitute.For<Serilog.ILogger>();
+
+        using var svc = NewService(client, ui, logger: logger,
+            initialDelay: TimeSpan.FromMilliseconds(1), interval: TimeSpan.FromMilliseconds(1));
+
+        await svc.StartAsync(CancellationToken.None);
+
+        var deadline = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(5);
+        while (client.CheckCalls < 1 && DateTimeOffset.UtcNow < deadline)
+            await Task.Delay(10);
+        // Give the catch a moment to log after the throw.
+        await Task.Delay(50);
+
+        logger.Received().Warning(boom, Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task RunLoop_AfterFailedCycle_ServiceRemainsUsableForManualCheck()
+    {
+        // First cycle throws from the UI; once that cycle is past, the service must still
+        // service a manual check (it is not permanently dead). Here the UI behaves on the
+        // second call, so a manual check completes and notifies normally.
+        var client = new FakeUpdateClient { CheckResult = new AgentUpdate("1.0.0") };
+        var ui = Substitute.For<IUpdateUi>();
+        var calls = 0;
+        ui.When(u => u.NotifyUpdateReady(Arg.Any<string>())).Do(_ =>
+        {
+            if (Interlocked.Increment(ref calls) == 1) throw new InvalidOperationException("toast failed");
+        });
+        var logger = Substitute.For<Serilog.ILogger>();
+
+        using var svc = NewService(client, ui, logger: logger,
+            initialDelay: TimeSpan.FromMilliseconds(1), interval: TimeSpan.FromMinutes(10));
+
+        await svc.StartAsync(CancellationToken.None);
+
+        var deadline = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(5);
+        while (client.CheckCalls < 1 && DateTimeOffset.UtcNow < deadline)
+            await Task.Delay(10);
+
+        // The service must still respond to a manual check after a background failure.
+        var act = () => svc.CheckNowAsync(manual: true);
+        await act.Should().NotThrowAsync();
+        ui.Received(2).NotifyUpdateReady("1.0.0");
     }
 
     [Fact]

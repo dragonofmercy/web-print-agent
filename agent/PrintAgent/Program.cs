@@ -120,7 +120,7 @@ internal static class Program
             trayHost.WireUpdates(
                 onCheckForUpdates: () => updateService.CheckNowAsync(manual: true),
                 onRestartForUpdate: updateService.OnUserWantsRestart);
-            _ = updateService.StartAsync(CancellationToken.None);
+            StartUpdaterObserved(updateService, logger);
 
             Application.Run();
 
@@ -165,6 +165,32 @@ internal static class Program
         {
             Log.CloseAndFlush();
         }
+    }
+
+    /// <summary>
+    /// Starts the background updater without letting any failure crash bootstrap or go unobserved.
+    /// StartAsync has a synchronous prologue (apply-pending path) that can throw synchronously, and
+    /// returns a Task whose later faults would otherwise be lost. Auto-update is best-effort: the
+    /// agent's core function is printing, so a failure to start it is logged and otherwise ignored.
+    /// </summary>
+    private static void StartUpdaterObserved(UpdateService updateService, ILogger logger)
+    {
+        Task task;
+        try
+        {
+            task = updateService.StartAsync(CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.Warning(ex, "Auto-update failed to start; continuing without it.");
+            return;
+        }
+
+        task.ContinueWith(
+            t => logger.Warning(t.Exception, "Auto-update start task faulted; continuing without it."),
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
     }
 
     private static PrintAgentOptions LoadOptions()
