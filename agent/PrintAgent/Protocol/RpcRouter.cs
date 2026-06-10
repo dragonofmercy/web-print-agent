@@ -51,10 +51,16 @@ public sealed class RpcRouter
         {
             return Serialize(ErrorResponse(request.Id, rpcEx.Code, rpcEx.Message));
         }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // Connection is going away; let the WebSocket receive loop's
+            // OperationCanceledException handling end the connection cleanly.
+            throw;
+        }
         catch (Exception ex)
         {
             Serilog.Log.Logger.Error(ex, "Unhandled RPC error in method {Method}", request.Method);
-            return Serialize(ErrorResponse(request.Id, JsonRpcErrorCodes.InvalidRequest, "Internal error"));
+            return Serialize(ErrorResponse(request.Id, JsonRpcErrorCodes.InternalError, "Internal error"));
         }
     }
 

@@ -99,4 +99,41 @@ public class RpcRouterTests
         response.Should().NotContain("secret");
         response.Should().Contain("Internal error");
     }
+
+    [Fact]
+    public async Task Dispatch_HandlerThrowsGenericException_ReturnsInternalErrorCode()
+    {
+        var handler = Substitute.For<IRpcHandler>();
+        handler.Method.Returns("foo");
+        handler.RequiresPairedConnection.Returns(false);
+        handler.HandleAsync(Arg.Any<JsonElement?>(), Arg.Any<ConnectionContext>(), Arg.Any<CancellationToken>())
+            .Returns<object?>(_ => throw new InvalidOperationException("boom"));
+        var router = new RpcRouter(new[] { handler });
+
+        var response = await router.DispatchAsync(
+            """{"jsonrpc":"2.0","id":1,"method":"foo"}""",
+            UnpairedConn(), CancellationToken.None);
+
+        response.Should().Contain("\"code\":-32603");
+    }
+
+    [Fact]
+    public async Task Dispatch_CancelledConnection_RethrowsWithoutBuildingErrorResponse()
+    {
+        var handler = Substitute.For<IRpcHandler>();
+        handler.Method.Returns("foo");
+        handler.RequiresPairedConnection.Returns(false);
+        handler.HandleAsync(Arg.Any<JsonElement?>(), Arg.Any<ConnectionContext>(), Arg.Any<CancellationToken>())
+            .Returns<object?>(callInfo => throw new OperationCanceledException(callInfo.Arg<CancellationToken>()));
+        var router = new RpcRouter(new[] { handler });
+
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var act = () => router.DispatchAsync(
+            """{"jsonrpc":"2.0","id":1,"method":"foo"}""",
+            UnpairedConn(), cts.Token);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
 }
