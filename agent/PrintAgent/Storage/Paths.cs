@@ -48,7 +48,8 @@ public sealed class Paths
 
         try
         {
-            var currentUser = WindowsIdentity.GetCurrent().User
+            using var identity = WindowsIdentity.GetCurrent();
+            var currentUser = identity.User
                 ?? throw new InvalidOperationException("Current Windows identity has no SID.");
             var localSystem = new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null);
             // Administrators keep FullControl: standard practice, since admins can take
