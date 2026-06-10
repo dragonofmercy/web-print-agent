@@ -258,15 +258,23 @@ public class UpdateServiceTests
             if (Interlocked.Increment(ref calls) == 1) throw new InvalidOperationException("toast failed");
         });
         var logger = Substitute.For<Serilog.ILogger>();
+        // Deterministic end-of-cycle signal: the background loop's catch logs this warning
+        // ONLY after CheckNowAsync's finally has released the single-flight lock (the throw
+        // from NotifyUpdateReady unwinds through that finally before reaching the loop's catch).
+        // Gating on it - rather than on CheckCalls, which is bumped before the lock is released -
+        // guarantees the manual check below is never skipped as a concurrent no-op.
+        var cycleDone = new TaskCompletionSource();
+        logger.When(l => l.Warning(Arg.Any<Exception>(), "Periodic update check failed; continuing the loop."))
+            .Do(_ => cycleDone.TrySetResult());
 
         using var svc = NewService(client, ui, logger: logger,
             initialDelay: TimeSpan.FromMilliseconds(1), interval: TimeSpan.FromMinutes(10));
 
         await svc.StartAsync(CancellationToken.None);
 
-        var deadline = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(5);
-        while (client.CheckCalls < 1 && DateTimeOffset.UtcNow < deadline)
-            await Task.Delay(10);
+        // Wait until the failing background cycle is fully drained and the lock is released.
+        var completed = await Task.WhenAny(cycleDone.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+        completed.Should().Be(cycleDone.Task, "the background cycle must complete and release the check lock");
 
         // The service must still respond to a manual check after a background failure.
         var act = () => svc.CheckNowAsync(manual: true);
