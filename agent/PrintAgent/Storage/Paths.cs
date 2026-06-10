@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Security.AccessControl;
 using System.Security.Principal;
 
@@ -77,7 +76,6 @@ public sealed class Paths
             // so failing startup on filesystems without ACL support (e.g. FAT32 roaming
             // profiles) would hurt more than it protects. Record the warning for the caller.
             AclWarning = $"Could not apply restrictive ACL to '{AppDataRoot}': {ex.Message}";
-            Debug.WriteLine(AclWarning);
         }
     }
 }
