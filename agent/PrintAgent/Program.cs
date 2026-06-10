@@ -99,14 +99,26 @@ internal static class Program
                 new GetJobStatusHandler(jobs),
             });
 
+            var connectionRegistry = new ConnectionRegistry();
             var endpoint = new WebSocketEndpoint(router, origins, publisher, logger,
-                options.MaxMessageBytes, options.MaxActiveConnections);
+                options.MaxMessageBytes, options.MaxActiveConnections, connectionRegistry);
 
             var host = new KestrelHost();
             host.StartAsync(options.PortRange, cert, endpoint, logger, CancellationToken.None).GetAwaiter().GetResult();
             boundPortRef = host.BoundPort;
             logger.Information("PrintAgent listening on wss://127.0.0.1:{Port}", host.BoundPort);
             configStore.SetLastBoundPort(host.BoundPort!.Value);
+
+            // Watch for printer add/remove and broadcast printers.changed to paired clients (spec 9.5).
+            // Windows-only (WMI); a WMI-unavailable box just disables this notification, never crashes.
+            IPrinterWatcher? printerWatcher = null;
+            if (OperatingSystem.IsWindows())
+            {
+                printerWatcher = new PrinterWatchService(logger);
+                printerWatcher.Changed += (_, _) => ObservePrinterBroadcast(connectionRegistry, logger);
+                try { printerWatcher.Start(); }
+                catch (Exception ex) { logger.Warning(ex, "Printer hot-plug watcher could not start; printers.changed disabled."); }
+            }
 
             var config = configStore.Load();
             var updateClient = new VelopackUpdateClient(options.UpdateRepoUrl, options.UpdateAllowPrerelease);
@@ -125,6 +137,9 @@ internal static class Program
             Application.Run();
 
             logger.Information("PrintAgent shutting down...");
+
+            // Stop the printer watcher first so no broadcast races teardown of the sockets/host.
+            printerWatcher?.Dispose();
 
             // Stop the background update loop before the tray UI it talks to goes away.
             updateService.Dispose();
@@ -188,6 +203,32 @@ internal static class Program
 
         task.ContinueWith(
             t => logger.Warning(t.Exception, "Auto-update start task faulted; continuing without it."),
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
+    }
+
+    /// <summary>
+    /// Fire-and-forget broadcast of printers.changed to all paired connections, with faults
+    /// observed and logged. Mirrors StartUpdaterObserved: a broadcast failure must never crash
+    /// anything; the watcher callback returns immediately while the send runs in the background.
+    /// </summary>
+    private static void ObservePrinterBroadcast(ConnectionRegistry registry, ILogger logger)
+    {
+        Task task;
+        try
+        {
+            var notification = new JsonRpcNotification { Method = "printers.changed", Params = new { } };
+            task = registry.BroadcastToPairedAsync(notification, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.Warning(ex, "printers.changed broadcast failed to start.");
+            return;
+        }
+
+        task.ContinueWith(
+            t => logger.Warning(t.Exception, "printers.changed broadcast faulted."),
             CancellationToken.None,
             TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
             TaskScheduler.Default);

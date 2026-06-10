@@ -42,7 +42,7 @@ public class KestrelHostIntegrationTests
 
         var cert = CertificateService.GenerateSelfSigned();
         var endpoint = new WebSocketEndpoint(router, origins, publisher,
-            Log.Logger, maxMessageBytes: 1024 * 1024, maxActiveConnections: 32);
+            Log.Logger, maxMessageBytes: 1024 * 1024, maxActiveConnections: 32, new ConnectionRegistry());
 
         var host = new KestrelHost();
         await host.StartAsync(new[] { 0 }, cert, endpoint, Log.Logger, CancellationToken.None);

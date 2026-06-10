@@ -18,6 +18,7 @@ public sealed class WebSocketEndpoint
     private readonly ILogger _log;
     private readonly int _maxMessageBytes;
     private readonly int _maxActiveConnections;
+    private readonly ConnectionRegistry _connections;
     private readonly ConcurrentDictionary<Guid, WebSocket> _activeSockets = new();
 
     public WebSocketEndpoint(
@@ -26,7 +27,8 @@ public sealed class WebSocketEndpoint
         JobEventPublisher publisher,
         ILogger log,
         int maxMessageBytes,
-        int maxActiveConnections)
+        int maxActiveConnections,
+        ConnectionRegistry connections)
     {
         _router = router;
         _origins = origins;
@@ -34,6 +36,7 @@ public sealed class WebSocketEndpoint
         _log = log;
         _maxMessageBytes = maxMessageBytes;
         _maxActiveConnections = maxActiveConnections;
+        _connections = connections;
     }
 
     public async Task HandleAsync(HttpContext context)
@@ -72,6 +75,7 @@ public sealed class WebSocketEndpoint
         try
         {
             _activeSockets[connection.ConnectionId] = ws;
+            _connections.Add(connection);
 
             using var subscription = _publisher.Subscribe(connection.ConnectionId, (ev, ct) =>
             {
@@ -91,6 +95,7 @@ public sealed class WebSocketEndpoint
         finally
         {
             _activeSockets.TryRemove(connection.ConnectionId, out _);
+            _connections.Remove(connection.ConnectionId);
         }
     }
 
