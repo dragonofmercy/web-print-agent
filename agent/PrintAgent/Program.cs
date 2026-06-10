@@ -257,9 +257,10 @@ internal static class Program
                     CertificateService.TryUninstallFromTrustedRoot(thumbprint);
             }
 
-            // Best-effort: delete PFX and DPAPI password file so re-install starts fresh.
-            try { if (File.Exists(paths.PfxFile)) File.Delete(paths.PfxFile); } catch { }
-            try { if (File.Exists(paths.PfxPasswordFile)) File.Delete(paths.PfxPasswordFile); } catch { }
+            // Best-effort: remove the whole app data root (config.json, pfx files, logs/, bin/)
+            // so uninstall leaves nothing behind (design doc section 11.3). Locked files are
+            // skipped rather than failing the uninstall; no logger exists at this point.
+            AppDataCleanup.TryDeleteRoot(paths);
         }
         catch { /* best effort */ }
     }
