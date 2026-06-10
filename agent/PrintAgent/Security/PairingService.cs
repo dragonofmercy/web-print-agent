@@ -15,6 +15,7 @@ public sealed class PairingService : IPairingCoordinator
     private readonly TimeSpan _refusalCooldown;
     private readonly TimeSpan _promptTimeout;
     private readonly ConcurrentDictionary<string, DateTimeOffset> _refusedUntil = new();
+    private readonly ConcurrentDictionary<string, Lazy<Task<PairingDecision>>> _pendingPrompts = new();
 
     public PairingService(ConfigStore configStore, IPairingUi ui, TimeSpan refusalCooldown, TimeSpan timeout)
     {
@@ -31,20 +32,38 @@ public sealed class PairingService : IPairingCoordinator
         if (_refusedUntil.TryGetValue(origin, out var until) && DateTimeOffset.UtcNow < until)
             return PairingDecision.Refused;
 
-        var decision = await _ui.PromptAsync(origin, _promptTimeout, ct);
+        // Coalesce concurrent requests for the same origin onto a single prompt:
+        // only the Lazy that wins publication runs PromptAndRecordAsync, every
+        // other caller awaits the same pending decision.
+        var pending = _pendingPrompts.GetOrAdd(origin,
+            key => new Lazy<Task<PairingDecision>>(() => PromptAndRecordAsync(key, ct)));
 
-        switch (decision)
+        return await pending.Value;
+    }
+
+    private async Task<PairingDecision> PromptAndRecordAsync(string origin, CancellationToken ct)
+    {
+        try
         {
-            case PairingDecision.Approved:
-                _configStore.AddAllowedOrigin(origin);
-                _refusedUntil.TryRemove(origin, out _);
-                break;
-            case PairingDecision.Refused:
-            case PairingDecision.TimedOut:
-                _refusedUntil[origin] = DateTimeOffset.UtcNow + _refusalCooldown;
-                break;
-        }
+            var decision = await _ui.PromptAsync(origin, _promptTimeout, ct);
 
-        return decision;
+            switch (decision)
+            {
+                case PairingDecision.Approved:
+                    _configStore.AddAllowedOrigin(origin);
+                    _refusedUntil.TryRemove(origin, out _);
+                    break;
+                case PairingDecision.Refused:
+                case PairingDecision.TimedOut:
+                    _refusedUntil[origin] = DateTimeOffset.UtcNow + _refusalCooldown;
+                    break;
+            }
+
+            return decision;
+        }
+        finally
+        {
+            _pendingPrompts.TryRemove(origin, out _);
+        }
     }
 }
