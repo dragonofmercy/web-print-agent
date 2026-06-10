@@ -59,11 +59,62 @@ public class AppDataCleanupTests
 
             var result = act.Should().NotThrow().Subject;
             result.Should().BeFalse("the locked file prevents removing the root");
+            Directory.Exists(paths.AppDataRoot).Should().BeTrue();
             File.Exists(paths.ConfigFile).Should().BeFalse();
             File.Exists(paths.PfxFile).Should().BeFalse();
             File.Exists(paths.PfxPasswordFile).Should().BeFalse();
             File.Exists(paths.SumatraPdfPath).Should().BeFalse();
             File.Exists(lockedLog).Should().BeTrue();
+        }
+    }
+
+    // Relies on Windows directory link semantics (symlink/junction reparse points).
+    [FactWindowsOnly]
+    public void TryDeleteRoot_DirectoryLinkInRoot_DoesNotDeleteLinkTargetContents()
+    {
+        using var temp = new TempDirectory();
+        var paths = CreateFakeLayout(temp);
+
+        // Link target lives OUTSIDE the app data root: cleanup must never reach into it.
+        var targetDirectory = System.IO.Path.Combine(temp.Path, "link-target");
+        Directory.CreateDirectory(targetDirectory);
+        var targetFile = System.IO.Path.Combine(targetDirectory, "keep.txt");
+        File.WriteAllText(targetFile, "must survive");
+
+        var linkPath = System.IO.Path.Combine(paths.AppDataRoot, "linked");
+        try
+        {
+            Directory.CreateSymbolicLink(linkPath, targetDirectory);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Symlink creation needs SeCreateSymbolicLinkPrivilege or Developer Mode;
+            // without it there is nothing to exercise here, so bail out silently.
+            return;
+        }
+
+        try
+        {
+            // Read-only keeps the fast path (recursive Directory.Delete) from removing the
+            // link entry itself, so the per-entry fallback is the one that meets the link.
+            File.SetAttributes(linkPath, FileAttributes.Directory | FileAttributes.ReadOnly);
+
+            // A locked file makes the fast path fail and forces the fallback to run.
+            var lockedLog = System.IO.Path.Combine(paths.LogsDirectory, "locked.log");
+            using (new FileStream(lockedLog, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                var act = () => AppDataCleanup.TryDeleteRoot(paths);
+
+                act.Should().NotThrow();
+            }
+
+            Directory.Exists(targetDirectory).Should().BeTrue("the link target itself must be left alone");
+            File.Exists(targetFile).Should().BeTrue("cleanup must not traverse into the link target");
+        }
+        finally
+        {
+            // Let TempDirectory dispose cleanly.
+            if (Directory.Exists(linkPath)) File.SetAttributes(linkPath, FileAttributes.Directory);
         }
     }
 }

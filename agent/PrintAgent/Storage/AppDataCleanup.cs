@@ -54,7 +54,10 @@ public static class AppDataCleanup
         {
             try
             {
-                File.SetAttributes(file, FileAttributes.Normal);
+                // For a file reparse point (symlink), delete the link itself without touching
+                // attributes, so the read-only flag of the link target is never cleared.
+                if ((File.GetAttributes(file) & FileAttributes.ReparsePoint) == 0)
+                    File.SetAttributes(file, FileAttributes.Normal);
                 File.Delete(file);
             }
             catch (Exception ex) when (IsFileSystemAccessError(ex)) { /* locked: skip */ }
@@ -62,8 +65,14 @@ public static class AppDataCleanup
 
         foreach (var subDirectory in subDirectories)
         {
-            DeleteContentsBestEffort(subDirectory);
-            try { Directory.Delete(subDirectory, recursive: false); }
+            try
+            {
+                // The fast path (recursive Directory.Delete) does not traverse reparse points
+                // (junctions/symlinks) either: delete the link itself, never its target's contents.
+                if ((File.GetAttributes(subDirectory) & FileAttributes.ReparsePoint) == 0)
+                    DeleteContentsBestEffort(subDirectory);
+                Directory.Delete(subDirectory, recursive: false);
+            }
             catch (Exception ex) when (IsFileSystemAccessError(ex)) { /* not empty: skip */ }
         }
     }
