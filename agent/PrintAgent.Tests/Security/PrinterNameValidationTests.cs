@@ -46,7 +46,25 @@ public class PrinterNameValidationTests
 
         var ex = await act.Should().ThrowAsync<RpcApplicationException>();
         ex.Which.Code.Should().Be(JsonRpcErrorCodes.PrinterNotFound);
-        printers.DidNotReceive().List(); // prove the prefix check short-circuited
+        printers.DidNotReceive().Exists(Arg.Any<string>()); // prove the prefix check short-circuited
+    }
+
+    [Fact]
+    public async Task Handle_NormalPrinterName_ConsultsExistsNotList()
+    {
+        var jobs = Substitute.For<IPrintJobSubmitter>();
+        var printers = PrinterServiceFakes.With("HP LaserJet");
+        jobs.SubmitAsync(Arg.Any<string>(), Arg.Any<byte[]>(), Arg.Any<PrintOptions>(),
+                Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Guid.NewGuid());
+        var handler = new PrintHandler(jobs, printers, maxBytes: 1024);
+
+        await handler.HandleAsync(MakeParams("HP LaserJet"),
+            new ConnectionContext { IsPaired = true }, CancellationToken.None);
+
+        // Hot path must use the cheap existence check, not the heavy enumeration.
+        printers.Received(1).Exists(Arg.Any<string>());
+        printers.DidNotReceive().List();
     }
 
     [Fact]

@@ -38,8 +38,8 @@ public sealed class PrintHandler : IRpcHandler
                 $"Printer '{printerName}' is not installed.");
 
         // Whitelist against the local printer set (defense-in-depth on top of pairing).
-        var installed = _printers.List();
-        if (!installed.Any(pi => string.Equals(pi.Name, printerName, StringComparison.OrdinalIgnoreCase)))
+        // Cheap existence check only; full enumeration (WMI + paper sizes) is avoided on the hot path.
+        if (!_printers.Exists(printerName))
             throw new RpcApplicationException(JsonRpcErrorCodes.PrinterNotFound,
                 $"Printer '{printerName}' is not installed.");
 

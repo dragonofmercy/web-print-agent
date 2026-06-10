@@ -7,11 +7,27 @@ namespace PrintAgent.Printing;
 public interface IPrinterService
 {
     IReadOnlyList<PrinterInfo> List();
+
+    bool Exists(string name);
 }
 
 [SupportedOSPlatform("windows")]
 public sealed class PrinterService : IPrinterService
 {
+    public bool Exists(string name)
+    {
+        // Cheap membership test over the installed-printer name set only:
+        // no WMI status query, no PaperSizes enumeration, no PrinterInfo
+        // construction. This is the hot-path "does this name exist?" check.
+        foreach (string installed in PrinterSettings.InstalledPrinters)
+        {
+            if (string.Equals(installed, name, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
     public IReadOnlyList<PrinterInfo> List()
     {
         var defaults = new PrinterSettings().PrinterName;
