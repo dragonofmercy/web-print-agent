@@ -42,7 +42,8 @@ public class AppDataCleanupTests
         result.Should().BeTrue();
     }
 
-    [Fact]
+    // Relies on Windows sharing semantics: on Unix, deleting an open file succeeds.
+    [FactWindowsOnly]
     public void TryDeleteRoot_LockedFile_DoesNotThrowAndDeletesTheRest()
     {
         using var temp = new TempDirectory();
