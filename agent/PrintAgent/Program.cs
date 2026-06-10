@@ -49,6 +49,9 @@ internal static class Program
         Log.Logger = logger;
         logger.Information("{AppName} {Version} starting", Strings.AppName, AppInfo.Version);
 
+        // EnsureLayout ran before the logger existed; surface any ACL hardening failure now.
+        if (paths.AclWarning is not null) logger.Warning("{AclWarning}", paths.AclWarning);
+
         try
         {
             CleanupOrphanTempPdfs(paths);
