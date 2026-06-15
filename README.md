@@ -2,10 +2,10 @@
 
 [![License](https://badgen.net/github/license/dragonofmercy/web-print-agent)](https://github.com/dragonofmercy/web-print-agent/blob/main/LICENSE)
 [![Latest release](https://badgen.net/github/release/dragonofmercy/web-print-agent/stable)](https://github.com/dragonofmercy/web-print-agent/releases/latest)
-[![Last commit](https://badgen.net/github/last-commit/dragonofmercy/web-print-agent/main)](https://github.com/dragonofmercy/web-print-agent/commits/main)
-[![Open issues](https://badgen.net/github/open-issues/dragonofmercy/web-print-agent)](https://github.com/dragonofmercy/web-print-agent/issues)
+[![.NET](https://img.shields.io/badge/.NET-8.0-512bd4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/8.0)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078d4?logo=windows&logoColor=white)](https://www.microsoft.com/windows)
 [![Stars](https://badgen.net/github/stars/dragonofmercy/web-print-agent)](https://github.com/dragonofmercy/web-print-agent/stargazers)
-[![Ko-fi](https://badgen.net/badge/Ko-fi/Donate/ff5e5b)](https://ko-fi.com/dragonofmercy)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Donate-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/dragonofmercy)
 
 Windows tray agent (.NET 8) that exposes a `wss://` JSON-RPC API on `localhost` so paired HTTPS web pages can list local printers and silent-print PDFs without going through the browser dialog.
 
