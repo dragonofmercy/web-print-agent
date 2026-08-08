@@ -37,6 +37,13 @@ if (-not (Get-Command vpk -ErrorAction SilentlyContinue)) {
 }
 
 Write-Host "==> Packing with Velopack..."
+
+# Full package only, no deltas. Velopack would otherwise diff against whatever older
+# .nupkg files happen to be sitting in Output/, which makes the result depend on local
+# leftovers rather than on the release itself. Wiping Output/ keeps every build
+# reproducible from a clean slate; --delta None makes the intent explicit rather than
+# relying on the folder being empty.
+if (Test-Path $OutputDir) { Remove-Item -Recurse -Force $OutputDir }
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 
 vpk pack `
@@ -48,12 +55,13 @@ vpk pack `
     --mainExe PrintAgent.exe `
     --icon $IconFile `
     --splashImage $SplashFile `
+    --delta None `
     --outputDir $OutputDir
 
 if ($LASTEXITCODE -ne 0) { throw "vpk pack failed (exit $LASTEXITCODE)" }
 
 Write-Host ""
 Write-Host "Done. Installer output: $OutputDir"
-Write-Host "  PrintAgentSetup.exe  -- run on the target machine to install"
-Write-Host "  RELEASES             -- Velopack release feed (for auto-update)"
-Write-Host "  *.nupkg              -- delta-update package"
+Write-Host "  PrintAgent-win-Setup.exe  -- run on the target machine to install"
+Write-Host "  RELEASES                  -- Velopack release feed (for auto-update)"
+Write-Host "  *-full.nupkg              -- full update package (no deltas are produced)"

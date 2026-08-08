@@ -81,12 +81,17 @@ cd installer
 ./build.ps1 -Version 0.1.0
 ```
 
+`build.ps1` wipes `installer/Output/` before packing, so every build starts from a clean slate.
+
 Output in `installer/Output/`:
-- `PrintAgentSetup.exe` — run on the target machine to install (per-user, no elevation required)
-- `RELEASES` — Velopack release feed for auto-update
-- `PrintAgent-0.1.0-full.nupkg` — delta update package
+- `PrintAgent-win-Setup.exe` - run on the target machine to install (per-user, no elevation required)
+- `PrintAgent-win-Portable.zip` - no-install variant
+- `RELEASES` / `releases.win.json` - Velopack release feed for auto-update
+- `PrintAgent-<version>-full.nupkg` - full update package
 
 The installer is built with [Velopack](https://velopack.io/). The `vpk` dotnet tool is installed automatically by `build.ps1` if not already present.
+
+**Releases are full-only (`--delta None`).** Delta generation would diff against whichever older `.nupkg` files happen to be in `Output/`, which makes builds depend on local leftovers. Auto-update still works - Velopack falls back to the full package - but each update downloads the whole ~92 MB payload instead of a small patch.
 
 ### Antivirus false positives
 
