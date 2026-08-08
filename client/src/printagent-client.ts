@@ -57,7 +57,7 @@ export class PrintAgent {
       handshakeTimeoutMs: options.handshakeTimeoutMs ?? 30_000,
       reconnectInitialDelayMs: options.reconnectInitialDelayMs ?? 1_000,
       reconnectMaxDelayMs: options.reconnectMaxDelayMs ?? 30_000,
-      clientVersion: options.clientVersion ?? '0.1.4',
+      clientVersion: options.clientVersion ?? '0.1.5',
     };
     this.reconnectDelay = this.opts.reconnectInitialDelayMs;
   }
