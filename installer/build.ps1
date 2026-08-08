@@ -26,7 +26,6 @@ Write-Host "==> Publishing PrintAgent $Version..."
 dotnet publish $ProjectFile `
     -c Release `
     -r win-x64 `
-    -p:PublishSingleFile=true `
     -p:Version=$Version
 
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed (exit $LASTEXITCODE)" }

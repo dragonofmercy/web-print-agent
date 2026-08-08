@@ -10,8 +10,9 @@
         <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         <SelfContained>true</SelfContained>
-        <PublishSingleFile>true</PublishSingleFile>
-        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <!-- Deliberately NOT PublishSingleFile: Velopack packages the publish folder anyway, and a
+             self-extracting bundle is a packer signature for Defender's ML heuristics on unsigned
+             builds. A plain folder also makes Velopack delta updates meaningful. -->
         <DebugType>embedded</DebugType>
         <Version>0.1.4</Version>
         <Authors>DragonOfMercy</Authors>
@@ -42,9 +43,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="Resources\SumatraPDF.exe" Condition="Exists('Resources\SumatraPDF.exe')">
-            <LogicalName>SumatraPDF.exe</LogicalName>
-        </EmbeddedResource>
+        <!-- Copied next to PrintAgent.exe rather than embedded: the app must never write an
+             executable to disk at runtime, and this preserves SumatraPDF's own signature. -->
+        <None Include="Resources\SumatraPDF.exe" Condition="Exists('Resources\SumatraPDF.exe')">
+            <Link>SumatraPDF.exe</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
         <EmbeddedResource Include="Resources\icon.ico">
             <LogicalName>icon.ico</LogicalName>
         </EmbeddedResource>

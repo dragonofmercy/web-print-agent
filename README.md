@@ -44,16 +44,18 @@ Inspired by tools such as QZ Tray and Dymo Web Service, but kept intentionally m
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Node.js 20+](https://nodejs.org) (for building the TypeScript client)
 - `.NET tool: vpk` — auto-installed globally by `build.ps1` if not present (`dotnet tool install -g vpk`)
-- [SumatraPDF](https://www.sumatrapdfreader.org/download-free-pdf-viewer) — **already vendored** at `agent/PrintAgent/Resources/SumatraPDF.exe` (3.6.1, ~19 MB, portable 64-bit). It is embedded at compile time as a resource and extracted to `%APPDATA%\PrintAgent\bin\` on first run. To bump the version, replace the file and update `SUMATRAPDF-NOTICE.txt`.
+- [SumatraPDF](https://www.sumatrapdfreader.org/download-free-pdf-viewer) — **already vendored** at `agent/PrintAgent/Resources/SumatraPDF.exe` (3.6.1, ~19 MB, portable 64-bit). It is copied to the publish folder next to `PrintAgent.exe`, never embedded or extracted at runtime. To bump the version, replace the file and update `SUMATRAPDF-NOTICE.txt`.
 
 ### Build the agent
 
 ```sh
 cd agent
-dotnet publish PrintAgent/PrintAgent.csproj -c Release -r win-x64 -p:PublishSingleFile=true
+dotnet publish PrintAgent/PrintAgent.csproj -c Release -r win-x64
 ```
 
-Output: `agent/PrintAgent/bin/Release/net8.0-windows/win-x64/publish/PrintAgent.exe` (~90 MB self-contained, including the embedded SumatraPDF binary).
+Output: `agent/PrintAgent/bin/Release/net8.0-windows/win-x64/publish/` - a self-contained folder (~190 MB, ~390 files) containing `PrintAgent.exe`, the .NET runtime, and `SumatraPDF.exe`. Velopack packages the whole folder.
+
+**Do not add `-p:PublishSingleFile=true`.** A self-extracting bundle is a packer signature for Defender's ML heuristics, and unsigned builds get flagged as `Trojan:Win32/Sabsik.FL.A!ml`. See "Antivirus false positives" below.
 
 ### Run the test suite
 
@@ -85,6 +87,25 @@ Output in `installer/Output/`:
 - `PrintAgent-0.1.0-full.nupkg` — delta update package
 
 The installer is built with [Velopack](https://velopack.io/). The `vpk` dotnet tool is installed automatically by `build.ps1` if not already present.
+
+### Antivirus false positives
+
+PrintAgent is not code-signed, so Windows Defender's machine-learning heuristics may flag the build as `Trojan:Win32/Sabsik.FL.A!ml` - the generic bucket for unsigned Windows executables of unknown reputation. Two build choices exist specifically to keep that surface small:
+
+- **No `PublishSingleFile`.** A self-extracting bundle looks like a packed binary. Velopack packages the publish folder anyway, so the flag buys nothing.
+- **`SumatraPDF.exe` is shipped, not extracted.** Writing an executable to disk at runtime and spawning it is the "dropper" pattern; shipping it directly also keeps SumatraPDF's own Authenticode signature intact.
+
+What remains is the unsigned `Setup.exe` and zero SmartScreen reputation. Until the project is signed:
+
+1. Submit each release to Microsoft as a false positive: <https://www.microsoft.com/en-us/wdsi/filesubmission> ("Software developer" tab). The correction propagates to all machines, but it is per-hash, so it must be redone every release.
+2. For local development, exclude the build output directories rather than individual files (hashes change on every publish):
+
+```powershell
+Add-MpPreference -ExclusionPath "<repo>\build\agent\PrintAgent\bin"
+Add-MpPreference -ExclusionPath "<repo>\build\installer"
+```
+
+The real fix is an Authenticode signature. See the project notes on SignPath Foundation (free for OSS) and Azure Trusted Signing.
 
 ## Test page
 

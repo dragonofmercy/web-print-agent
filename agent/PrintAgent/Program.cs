@@ -71,7 +71,7 @@ internal static class Program
             CertificateService.TryInstallToTrustedRoot(cert);
             configStore.SetCertThumbprint(cert.Thumbprint);
 
-            ExtractEmbeddedSumatraPdf(paths.SumatraPdfPath);
+            CleanupLegacyBinDirectory(paths);
 
             var origins = new OriginAuthorizationService(configStore, options.AllowInsecureOrigins);
 
@@ -279,14 +279,26 @@ internal static class Program
         catch { /* best effort */ }
     }
 
-    private static void ExtractEmbeddedSumatraPdf(string targetPath)
+    /// <summary>
+    /// Removes %APPDATA%\PrintAgent\bin\, where versions up to 0.1.4 extracted SumatraPDF.exe
+    /// at startup. The binary now ships next to PrintAgent.exe, so the directory is dead weight
+    /// after an upgrade - and a stray unsigned executable in app data is exactly what AV
+    /// heuristics flag. Best effort: a locked file just leaves it for the next run.
+    /// </summary>
+    private static void CleanupLegacyBinDirectory(Paths paths)
     {
-        if (!SumatraExtraction.TryExtract(targetPath, out var warning))
+        try
         {
-            if (warning is not null) Log.Logger.Warning(warning);
-            return;
+            if (Directory.Exists(paths.LegacyBinDirectory))
+            {
+                Directory.Delete(paths.LegacyBinDirectory, recursive: true);
+                Log.Logger.Information("Removed legacy {Directory}.", paths.LegacyBinDirectory);
+            }
         }
-        Log.Logger.Information("SumatraPDF.exe verified at {Path}.", targetPath);
+        catch (Exception ex)
+        {
+            Log.Logger.Warning(ex, "Could not remove legacy {Directory}.", paths.LegacyBinDirectory);
+        }
     }
 
     private static void RemoveStartupShortcut()
@@ -327,7 +339,7 @@ internal static class Program
                     CertificateService.TryUninstallFromTrustedRoot(thumbprint);
             }
 
-            // Best-effort: remove the whole app data root (config.json, pfx files, logs/, bin/)
+            // Best-effort: remove the whole app data root (config.json, pfx files, logs/)
             // so uninstall leaves nothing behind (design doc section 11.3). Locked files are
             // skipped rather than failing the uninstall; no logger exists at this point.
             AppDataCleanup.TryDeleteRoot(paths);

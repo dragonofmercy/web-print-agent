@@ -4,7 +4,9 @@ This folder contains binary assets shipped with PrintAgent.
 
 ## SumatraPDF.exe
 
-The repo ships a vendored copy of SumatraPDF (currently **3.6.1**, ~19 MB, portable 64-bit) so the build is reproducible without any external download. The binary is included as an `<EmbeddedResource>` in `PrintAgent.csproj` and extracted to `%APPDATA%\PrintAgent\bin\` on first run.
+The repo ships a vendored copy of SumatraPDF (currently **3.6.1**, ~19 MB, portable 64-bit) so the build is reproducible without any external download. The binary is a `<None ... CopyToOutputDirectory>` item in `PrintAgent.csproj`, so it lands next to `PrintAgent.exe` in the publish folder and Velopack packages it as-is.
+
+It is deliberately **not** an `<EmbeddedResource>` extracted at runtime (that was the pre-0.1.5 design). Writing a PE to disk and spawning it is the "dropper" pattern that trips Defender's ML heuristics on unsigned builds, and shipping the file directly also preserves SumatraPDF's own Authenticode signature.
 
 To bump the version: download a newer portable 64-bit build from <https://www.sumatrapdfreader.org/download-free-pdf-viewer>, replace this file, and update the version line in `SUMATRAPDF-NOTICE.txt`.
 

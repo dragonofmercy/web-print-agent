@@ -47,7 +47,7 @@ public sealed class SumatraPdfRunner : ISumatraRunner
     {
         if (!File.Exists(_binaryPath))
             throw new FileNotFoundException(
-                $"PDF engine not found at {_binaryPath}. SumatraPDF.exe must be embedded at build time " +
+                $"PDF engine not found at {_binaryPath}. SumatraPDF.exe ships next to PrintAgent.exe " +
                 $"(place it in agent/PrintAgent/Resources/ before publishing).",
                 _binaryPath);
 

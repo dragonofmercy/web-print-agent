@@ -15,9 +15,13 @@ public class AppDataCleanupTests
         File.WriteAllText(paths.PfxFile, "fake-pfx");
         File.WriteAllText(paths.PfxPasswordFile, "fake-password");
         File.WriteAllText(System.IO.Path.Combine(paths.LogsDirectory, "printagent-20260101.log"), "log line");
-        File.WriteAllText(paths.SumatraPdfPath, "fake-exe");
+        // Pre-0.1.5 layout: uninstalling an upgraded install must still clear the old bin/.
+        Directory.CreateDirectory(paths.LegacyBinDirectory);
+        File.WriteAllText(LegacySumatraPath(paths), "fake-exe");
         return paths;
     }
+
+    private static string LegacySumatraPath(Paths paths) => System.IO.Path.Combine(paths.LegacyBinDirectory, "SumatraPDF.exe");
 
     [Fact]
     public void TryDeleteRoot_FullLayout_DeletesEverythingIncludingRoot()
@@ -63,7 +67,7 @@ public class AppDataCleanupTests
             File.Exists(paths.ConfigFile).Should().BeFalse();
             File.Exists(paths.PfxFile).Should().BeFalse();
             File.Exists(paths.PfxPasswordFile).Should().BeFalse();
-            File.Exists(paths.SumatraPdfPath).Should().BeFalse();
+            File.Exists(LegacySumatraPath(paths)).Should().BeFalse();
             File.Exists(lockedLog).Should().BeTrue();
         }
     }

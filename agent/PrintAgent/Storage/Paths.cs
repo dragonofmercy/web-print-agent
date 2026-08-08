@@ -10,9 +10,21 @@ public sealed class Paths
     public string PfxFile => Path.Combine(AppDataRoot, "printagent.pfx");
     public string PfxPasswordFile => Path.Combine(AppDataRoot, "printagent.pfx.password");
     public string LogsDirectory => Path.Combine(AppDataRoot, "logs");
-    public string BinDirectory => Path.Combine(AppDataRoot, "bin");
-    public string SumatraPdfPath => Path.Combine(BinDirectory, "SumatraPDF.exe");
     public string TempPdfPattern => "printagent-*.pdf";
+
+    /// <summary>
+    /// SumatraPDF ships as a plain file next to PrintAgent.exe in the install directory
+    /// (Velopack packages the whole publish folder). It is deliberately NOT extracted at
+    /// runtime: writing a PE to disk and spawning it is the "dropper" pattern that trips
+    /// Defender's ML heuristics on unsigned builds.
+    /// </summary>
+    public string SumatraPdfPath => Path.Combine(AppContext.BaseDirectory, "SumatraPDF.exe");
+
+    /// <summary>
+    /// Pre-0.1.5 location of the extracted SumatraPDF.exe. Removed on startup so upgrades
+    /// do not leave a stray executable behind in the user's app data.
+    /// </summary>
+    public string LegacyBinDirectory => Path.Combine(AppDataRoot, "bin");
 
     /// <summary>
     /// Set when <see cref="EnsureLayout"/> could not apply the restrictive ACL.
@@ -32,13 +44,12 @@ public sealed class Paths
     {
         Directory.CreateDirectory(AppDataRoot);
         Directory.CreateDirectory(LogsDirectory);
-        Directory.CreateDirectory(BinDirectory);
         ApplyRestrictiveAcl();
     }
 
     /// <summary>
     /// Locks down the app data root (config.json, printagent.pfx, printagent.pfx.password,
-    /// bin/, logs/) with a protected DACL that child files and subdirectories inherit.
+    /// logs/) with a protected DACL that child files and subdirectories inherit.
     /// </summary>
     private void ApplyRestrictiveAcl()
     {
